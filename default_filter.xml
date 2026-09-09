@@ -784,4 +784,57 @@
         </tags>
         <impact>4</impact>
     </filter>
+    <filter>
+        <id>79</id>
+        <rule><![CDATA[(?:\$\{(?:[^{}]*jndi|[^}]*\$(?:\{[^{}]*\})+[^}]*|[^}]*(?:lower|upper|env|sys):)[^}]*\})]]></rule>
+        <description>Log4Shell JNDI injection (CVE-2021-44228) and obfuscation variants</description>
+        <tags>
+            <tag>log4j</tag>
+            <tag>rfe</tag>
+            <tag>jndi</tag>
+        </tags>
+        <impact>10</impact>
+    </filter>
+    <filter>
+        <id>80</id>
+        <rule><![CDATA[(?:(?:https?|ftp|gopher|dict|tftp|ldap|file)://(?:169\.254\.169\.254|metadata\.google\.internal|metadata\.goog|127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\]|(?:10|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\.\d+\.\d+))|(?:/latest/meta-data|/metadata/instance|/computeMetadata/v1)]]></rule>
+        <description>Server-Side Request Forgery (SSRF) targeting Cloud Metadata or Private Subnets</description>
+        <tags>
+            <tag>ssrf</tag>
+            <tag>cloud</tag>
+            <tag>id</tag>
+        </tags>
+        <impact>9</impact>
+    </filter>
+    <filter>
+        <id>81</id>
+        <rule><![CDATA[(?:\{\{\s*.*?(?:\d+\s*[\*\-\+\/]\s*\d+|config|self|request|lipsum|cycler|joiner|namespace|url_for|__class__|__mro__|__globals__|__subclasses__).*?\}\})|(?:\$\{\s*.*?(?:T\([a-zA-Z0-9_\.]+\)|new\s+[a-zA-Z0-9_\.]+|\d+\s*[\*\-\+\/]\s*\d+).*?\})]]></rule>
+        <description>Server-Side Template Injection (SSTI) in Jinja2, Twig, or Spring EL</description>
+        <tags>
+            <tag>ssti</tag>
+            <tag>rfe</tag>
+        </tags>
+        <impact>9</impact>
+    </filter>
+    <filter>
+        <id>82</id>
+        <rule><![CDATA[(?:class\.module\.classLoader|class\.classLoader|springframework\.beans)]]></rule>
+        <description>Spring4Shell ClassLoader exploitation (CVE-2022-22965)</description>
+        <tags>
+            <tag>spring</tag>
+            <tag>deserialization</tag>
+            <tag>rfe</tag>
+        </tags>
+        <impact>10</impact>
+    </filter>
+    <filter>
+        <id>83</id>
+        <rule><![CDATA[(?:/\.(?:env|git(?:/HEAD|/config)?|aws/credentials|ssh/id_rsa)|/actuator/(?:env|heapdump|threaddump|gateway|health|metrics)|/swagger-ui|/api-docs|/graphql\?query=[^\s]*__schema)]]></rule>
+        <description>Sensitive file, environment, Actuator, or GraphQL introspection probe</description>
+        <tags>
+            <tag>probe</tag>
+            <tag>id</tag>
+        </tags>
+        <impact>6</impact>
+    </filter>
 </filters>

@@ -154,10 +154,14 @@ def main(argv: list = None) -> int:
     else:
         rules.extend(RuleLoader.load_xml(filter_path))
 
-    # Load modern rules if requested or if modern_rules.json exists
-    if args.modern and MODERN_RULES_JSON.is_file():
-        print(f"Loading modern attack signatures '{MODERN_RULES_JSON}'...")
-        rules.extend(RuleLoader.load_json(MODERN_RULES_JSON))
+    # Seamlessly fuse any additional standalone modern rules if available
+    if MODERN_RULES_JSON.is_file():
+        additional = RuleLoader.load_json(MODERN_RULES_JSON)
+        existing_ids = {r.rule_id for r in rules}
+        for r in additional:
+            if r.rule_id not in existing_ids:
+                rules.append(r)
+                existing_ids.add(r.rule_id)
 
     # Output directory
     odir = Path(args.output)
