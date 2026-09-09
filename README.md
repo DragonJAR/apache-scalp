@@ -1,41 +1,110 @@
-Scalp!/Anathema is a fork (or rather saving the code before GoogleCode collapses) of the original project originally hosted at GoogleCode (one of thousands forks, I feel); My aim is to rewrite outdated places (Scalp! was written at 2008, and since then Python has made a big step forward), add multiprocessing plus implement Anathema heuristic module.
+# Scalp! — Apache Log Attack Analyzer
 
-# Scalp!
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](#-license) [![Python](https://img.shields.io/badge/python-3-green.svg)](https://www.python.org) [![Upstream](https://img.shields.io/badge/upstream-nanopony%2Fapache--scalp-orange.svg)](https://github.com/nanopony/apache-scalp) [![Author](https://img.shields.io/badge/original%20author-Romain%20Gaucher-orange.svg)](http://rgaucher.info) [![Maintainer](https://img.shields.io/badge/maintained%20by-DragonJAR%20SAS-blue.svg)](https://www.DragonJAR.org) [![Español](https://img.shields.io/badge/leer%20en-Espa%C3%B1ol-blue.svg)](README.es.md)
 
-Scalp! is a log analyzer for the Apache web server that aims to look for security problems developed by Romain Gaucher. The main idea is to look through huge log files and extract the possible attacks that have been sent through HTTP/GET (By default, Apache does not log the HTTP/POST variable).
+> Scalp! is a log analyzer for the Apache web server that searches huge access logs for attack patterns sent through HTTP GET/POST requests, using the high-quality regular expressions of the [PHPIDS project](https://github.com/PHPIDS/PHPIDS).
 
-default_filters.xml is a part of PHP IDS project;
+This repository is a **modernization of [Nanopony's fork](https://github.com/nanopony/apache-scalp)** of the original Scalp! tool by Romain Gaucher. We only keep it alive: Python 3 compatibility, updated filter file, and maintenance fixes. All credit for the tool and its evolution belongs to the original authors.
 
-## How it works
-Scalp is basically using the regular expression from the PHP-IDS project and matches the lines from the Apache access log file. These regexp has been chosen because of their quality and the top activity of the team maintaining that project.
+## 🎯 What It Does
 
-You will then need latest version of this file https://dev.itratos.de/projects/php-ids/repository/raw/trunk/lib/IDS/default_filter.xml in order to run Scalp. (actually, Scalp! can even download it for you :3 )
+- Scans Apache access logs line by line and matches them against the PHPIDS `default_filter.xml` regex rule set.
+- Detects and classifies attacks: XSS, SQL injection, CSRF, DoS, directory traversal, spam, information disclosure, remote file reference, and local file inclusion.
+- Reports matches per rule with impact score, description, and tags.
+- Includes the **Anathema** heuristic module (by Nanopony) for behavioral attack scoring.
+- Outputs results in TEXT, XML, or HTML.
 
-Scalp started as a simple python script which is still maintained, but I plan to focus my effort on the binary version (written in C++) for efficiency when it comes to scalp huge log files.
+## 📦 Installation
 
-### Usage
-Scalp has a couple of options that may be useful in order to save time when scalping a huge log file or in order to perform a full examination; the default options are almost okay for log files of hundreds of MB.
+```bash
+git clone https://github.com/DragonJAR/apache-scalp
+cd apache-scalp
+pip install -r requirements.txt
+```
 
-Current options:
+## ⚙️ Prerequisites
 
-- exhaustive: Won't stop at the first pattern matched, but will test all the patterns
-- tough: Will decode a part of potential attacks (this is done to use better the regexp from PHP-IDS in order to - decrease the false-negative rate)
-- period: Specify a time-frame to look at, all the rest will be ignored
-- sample: Does a random sampling of the log lines in order to look at a certain percentage, this is useful when the user doesn't want to do a full scan of all the log, but just ping it to see if there is some problem...
-- attack: Specify what classes of vulnerabilities the tool will look at (eg, look only for XSS, SQL Injection, etc.)
-Example of utilization:
+| Tool | Purpose |
+|------|---------|
+| Python 3 | Runtime |
+| `regex` (see `requirements.txt`) | Advanced regular expression engine |
+| Apache access log | Input data |
+| `default_filter.xml` (bundled) | PHPIDS attack signatures |
 
-    ./scalp-0.4.py -l /var/log/httpd_log -f ./default_filter.xml -o ./scalp-output --html
+The filter file ships with this repository. If missing, Scalp! downloads it automatically from the [PHPIDS project](https://github.com/PHPIDS/PHPIDS/blob/master/lib/IDS/default_filter.xml).
 
-### Help
+## 🚀 Usage
 
-    rgaucher@plop:~/work/scalp/branches$ ./scalp-0.4.py --help
+```bash
+python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html
+```
 
-### Features
-Since the main engine is done, I am currently focusing on the speed; for now, I am around 250000 lines of log in 170 seconds (which I consider not good, but okay compared to the Python's version I did before starting this one in C++) if I don't select an exhaustive list of the attacks (which means, it will not perform all the attack checking but stop at the first found -- based on criteria which is IMPACT > TYPE). To increase the speed, I am looking to use a multi-thread engine in order to take advantage of the muti-core processors.
+```text
+Scalp the apache log! by Romain Gaucher
+usage:  ./scalp.py [--log|-l log_file] [--filters|-f filter_file] [--period time-frame] [OPTIONS] [--attack a1,a2,..,an]
+                   [--sample|-s 4.2]
+   --log       |-l:  the apache log file './access_log' by default
+   --filters   |-f:  the filter file     './default_filter.xml' by default
+   --exhaustive|-e:  will report all type of attacks detected and not stop at the first found
+   --tough     |-u:  try to decode the potential attack vectors (may increase the examination time)
+   --period    |-p:  the period must be specified in the same format as in the Apache logs using * as wild-card
+                     ex: 04/Apr/2008:15:45;*/Mai/2008
+   --html      |-h:  generate an HTML output
+   --xml       |-x:  generate an XML output
+   --text      |-t:  generate a simple text output (default)
+   --except    |-c:  generate a file that contains the non examined logs due to the main regular
+                     expression; ill-formed Apache log etc.
+   --attack    |-a:  specify the list of attacks to look for
+                     list: xss, sqli, csrf, dos, dt, spam, id, ref, lfi
+                     ex: xss,sqli,lfi,ref
+   --ignore-ip|-i:  specify the list of IP Addresses to exclude (comma separated)
+   --ignore-subnet|-n:  specify the list of Subnets to exclude (comma separated)
+   --output    |-o:  specifying the output directory; by default, scalp will try to write in the
+                     same directory as the log file
+   --sample    |-s:  use a random sample of the lines, the number (float in [0,100]) is the
+                     percentage, ex: --sample 0.1 for 1/1000
+```
 
-Beside the speed of this software, a couple of points are important:
+### Attack Classes
 
-- output in many formats (TEXT, XML, HTML)
-- options in order to let the user do a pre-selection (mainly with a range of dates)
-- configuration of the format of the Apache log may come later...
+| Flag | Attack class |
+|------|--------------|
+| `xss` | Cross-site scripting |
+| `sqli` | SQL injection |
+| `csrf` | Cross-site request forgery |
+| `dos` | Denial of service |
+| `dt` | Directory traversal |
+| `spam` | Spam |
+| `id` | Information disclosure |
+| `ref` | Remote file reference |
+| `lfi` | Local file inclusion |
+
+## 🧠 Anathema Heuristic Module
+
+The `anathema/` package adds a heuristic layer (by Nanopony) that scores requests beyond pure regex matching, analyzing IP, method, URL, and user-agent patterns against a JSON signature base.
+
+## ⚠️ Limitations
+
+1. **Apache does not log POST bodies by default** — attack detection is primarily GET-based unless your log format captures request bodies.
+2. **Regex-based detection** — sophisticated or obfuscated payloads may evade matching; use `--tough` to decode encoded vectors.
+3. **Legacy codebase** — the tool originates from 2008 (Python 2 era); this fork patches Python 3 compatibility but the engine remains simple by design.
+4. **Log format assumptions** — non-standard Apache log formats may not parse correctly.
+
+## 🏛️ History & Credits
+
+This tool stands on the shoulders of others:
+
+- **[Romain Gaucher](http://rgaucher.info)** — original author of Scalp! (2008), hosted at the original Google Code project.
+- **[Nanopony](https://github.com/nanopony/apache-scalp)** — maintained and modernized the project: Python 3 rewrite, the Anathema heuristic module, and continued development after Google Code shut down.
+- **[PHPIDS team](https://github.com/PHPIDS/PHPIDS)** — the `default_filter.xml` regular expressions powering the detection engine.
+- **[DragonJAR SAS](https://www.DragonJAR.org)** — current maintenance: updated dependencies and filter file, documentation, and keeping the tool usable.
+
+## 📄 License
+
+Apache License 2.0 — inherited from the original project.
+
+## 👨‍💻 Maintainer
+
+**DragonJAR SAS** — [https://www.DragonJAR.org](https://www.DragonJAR.org)
+
+[Experts in IT security services, proactive validation, and offensive security.](https://www.dragonjar.org/servicios-de-seguridad-informatica)

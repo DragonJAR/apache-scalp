@@ -54,7 +54,7 @@ __release__     = __application__ + '/' + __version__
 __author__      = "Romain Gaucher"
 __credits__      = ["Romain Gaucher", "Don C. Weber", "nanopony"]
 
-PHPIDC_DEFAULT_XML_URL = "http://dev.itratos.de/projects/php-ids/repository/raw/trunk/lib/IDS/default_filter.xml" # they have expired https cert atm :c
+PHPIDC_DEFAULT_XML_URL = "https://raw.githubusercontent.com/PHPIDS/PHPIDS/master/lib/IDS/default_filter.xml"
 
 names = {
     'xss'  : 'Cross-Site Scripting',
