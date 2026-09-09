@@ -1,4 +1,5 @@
 """Filtering mechanisms for date ranges and network/IP exclusions."""
+import calendar
 from datetime import datetime
 import ipaddress
 from typing import Iterable, List, Optional, Set, Union
@@ -56,10 +57,18 @@ class DateRangeFilter:
             return None
 
         try:
-            day = int(parts[0]) if parts[0] != "*" else (31 if is_end else 1)
             month_str = parts[1].lower()[:3]
             month = MONTH_NAMES.get(month_str, int(parts[1]) if parts[1].isdigit() else 1)
             year = int(parts[2]) if parts[2] != "*" else (9999 if is_end else 1)
+
+            if parts[0] != "*":
+                day = int(parts[0])
+            elif is_end:
+                # Use actual days in month for the specified year (e.g. 28/29 for Feb)
+                valid_year = year if 1 <= year <= 9999 else 2024
+                day = calendar.monthrange(valid_year, month)[1]
+            else:
+                day = 1
 
             hour = int(parts[3]) if len(parts) > 3 and parts[3] != "*" else (23 if is_end else 0)
             minute = int(parts[4]) if len(parts) > 4 and parts[4] != "*" else (59 if is_end else 0)

@@ -74,7 +74,9 @@ class ScalpEngine:
                 continue
 
             if not entry:
-                result.unmatched_lines.append(raw_line)
+                stripped_raw = raw_line.strip()
+                if stripped_raw and not stripped_raw.startswith("#"):
+                    result.unmatched_lines.append(raw_line)
                 continue
 
             # IP / Subnet exclusion

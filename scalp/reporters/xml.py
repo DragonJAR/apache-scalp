@@ -42,10 +42,13 @@ class XmlReporter(BaseReporter):
             for impact in sorted(impacts_dict.keys(), reverse=True):
                 lines.append(f'    <impact value="{impact}">')
                 for m in impacts_dict[impact]:
+                    desc = m.rule.description.replace("]]>", "]]&gt;")
+                    pat = m.rule.pattern.replace("]]>", "]]&gt;")
+                    raw = m.entry.raw_line.replace("]]>", "]]&gt;")
                     lines.append("      <item>")
-                    lines.append(f"        <reason><![CDATA[{m.rule.description}]]></reason>")
-                    lines.append(f"        <regexp><![CDATA[{m.rule.pattern}]]></regexp>")
-                    lines.append(f"        <line><![CDATA[{m.entry.raw_line}]]></line>")
+                    lines.append(f"        <reason><![CDATA[{desc}]]></reason>")
+                    lines.append(f"        <regexp><![CDATA[{pat}]]></regexp>")
+                    lines.append(f"        <line><![CDATA[{raw}]]></line>")
                     lines.append("      </item>")
                 lines.append("    </impact>")
 

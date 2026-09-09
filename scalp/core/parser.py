@@ -84,8 +84,15 @@ class LogParser:
         cls, filepath: str
     ) -> Generator[Tuple[int, Optional[LogEntry], str], None, None]:
         """Streams a log file yielding (line_number, parsed_entry, raw_line).
+        Supports transparent gzip decompression for .gz archives.
         Uses errors='replace' to avoid terminating on invalid UTF-8 bytes."""
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        if filepath.endswith(".gz"):
+            import gzip
+            open_func = gzip.open
+        else:
+            open_func = open
+
+        with open_func(filepath, "rt", encoding="utf-8", errors="replace") as f:
             for line_no, raw_line in enumerate(f, start=1):
                 entry = cls.parse_line(raw_line)
                 yield line_no, entry, raw_line
