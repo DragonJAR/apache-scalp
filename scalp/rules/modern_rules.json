@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "log4j_01",
+      "pattern": "(?:\\$\\{(?:[^{}]*jndi|[^}]*\\$(?:\\{[^{}]*\\})+[^}]*|[^}]*(?:lower|upper|env|sys):)[^}]*\\})",
+      "description": "Log4Shell JNDI injection (CVE-2021-44228) and obfuscation variants",
+      "impact": 10,
+      "tags": ["log4j", "rfe", "jndi"]
+    },
+    {
+      "id": "ssrf_01",
+      "pattern": "(?:(?:https?|ftp|gopher|dict|tftp|ldap|file)://(?:169\\.254\\.169\\.254|metadata\\.google\\.internal|metadata\\.goog|127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0|\\[::1\\]|(?:10|172\\.(?:1[6-9]|2[0-9]|3[01])|192\\.168)\\.\\d+\\.\\d+))|(?:/latest/meta-data|/metadata/instance|/computeMetadata/v1)",
+      "description": "Server-Side Request Forgery (SSRF) targeting Cloud Metadata or Private Subnets",
+      "impact": 9,
+      "tags": ["ssrf", "cloud", "id"]
+    },
+    {
+      "id": "ssti_01",
+      "pattern": "(?:\\{\\{\\s*.*?(?:\\d+\\s*[\\*\\-\\+\\/]\\s*\\d+|config|self|request|lipsum|cycler|joiner|namespace|url_for|__class__|__mro__|__globals__|__subclasses__).*?\\}\\})|(?:\\$\\{\\s*.*?(?:T\\([a-zA-Z0-9_\\.]+\\)|new\\s+[a-zA-Z0-9_\\.]+|\\d+\\s*[\\*\\-\\+\\/]\\s*\\d+).*?\\})",
+      "description": "Server-Side Template Injection (SSTI) in Jinja2, Twig, or Spring EL",
+      "impact": 9,
+      "tags": ["ssti", "rfe"]
+    },
+    {
+      "id": "spring_01",
+      "pattern": "(?:class\\.module\\.classLoader|class\\.classLoader|springframework\\.beans)",
+      "description": "Spring4Shell ClassLoader exploitation (CVE-2022-22965)",
+      "impact": 10,
+      "tags": ["spring", "deserialization", "rfe"]
+    },
+    {
+      "id": "probe_01",
+      "pattern": "(?:/\\.(?:env|git(?:/HEAD|/config)?|aws/credentials|ssh/id_rsa)|/actuator/(?:env|heapdump|threaddump|gateway|health|metrics)|/swagger-ui|/api-docs|/graphql\\?query=[^\\s]*__schema)",
+      "description": "Sensitive file, environment, Actuator, or GraphQL introspection probe",
+      "impact": 6,
+      "tags": ["probe", "id"]
+    }
+  ]
+}
