@@ -65,7 +65,7 @@ python3 scalp.py -l /var/log/nginx/access.log.1.gz -o ./scalp-output --json
 ```text
 usage: scalp [--help] [-V] [-l LOG] [-f FILTERS] [-o OUTPUT] [-h] [-x] [-t]
              [--json] [-a ATTACK] [-p PERIOD] [-s SAMPLE] [-i IGNORE_IP]
-             [-n IGNORE_SUBNET] [-e] [-u] [-c] [--modern] [--anathema]
+             [-n IGNORE_SUBNET] [-e] [-u] [-c] [--anathema]
 
 Scalp! Apache/Nginx attack analyzer based on PHPIDS and modern signatures.
 
@@ -90,7 +90,6 @@ options:
   -u, --tough           Enable deep payload anti-evasion decoding (enabled by default)
   -c, --except          Save non-parsed log lines into scalp_except.txt
   --anathema            Enable the Anathema behavioral heuristic scoring module
-  --modern              Legacy flag (all attack signatures are active by default)
 ```
 
 ### Attack Classes

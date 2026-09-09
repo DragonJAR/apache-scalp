@@ -1092,7 +1092,7 @@ git commit -m "feat(reporters): implement modern HTML5, XML, Text, and JSON repo
 
 Features:
 - Full support for classic flags: `-l/--log`, `-f/--filters`, `-p/--period`, `-a/--attack`, `-s/--sample`, `-e/--exhaustive`, `-u/--tough`, `-h/--html`, `-x/--xml`, `-t/--text`, `-o/--output`, `-i/--ignore-ip`, `-n/--ignore-subnet`, `-c/--except`.
-- New modern flags: `--json`, `--rules-dir`, `--modern` (load modern attack signatures), `--anathema` (enable heuristic scoring), `--quiet`.
+- New modern flags: `--json`, `--rules-dir`, `--anathema` (enable heuristic scoring), `--quiet`.
 - Clear, formatted `--help` with examples.
 
 **Step 1: Write failing CLI tests**

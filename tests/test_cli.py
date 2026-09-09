@@ -29,7 +29,7 @@ def test_cli_scan_dry_run_json(tmp_path):
     json_files = list(out_dir.glob("*_scalp_*.json"))
     assert len(json_files) == 1
 
-def test_cli_scan_with_modern_rules_and_anathema(tmp_path):
+def test_cli_scan_with_anathema(tmp_path):
     log_file = tmp_path / "modern.log"
     log_content = (
         '10.0.0.1 - - [10/Oct/2024:12:00:00 +0000] "GET /proxy?url=http://169.254.169.254/latest/meta-data/ HTTP/1.1" 200 100\n'
@@ -41,7 +41,6 @@ def test_cli_scan_with_modern_rules_and_anathema(tmp_path):
     proc = subprocess.run([
         sys.executable, "-m", "scalp.cli",
         "-l", str(log_file),
-        "--modern",
         "--anathema",
         "-o", str(out_dir),
         "--json"
