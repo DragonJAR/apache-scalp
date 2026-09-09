@@ -12,8 +12,8 @@ This repository is a **modernization of [Nanopony's fork](https://github.com/nan
 - Supports **plain text and compressed gzip logs (`.gz`)** transparently.
 - Inspects **multiple HTTP vectors**: Request URL, `User-Agent`, and `Referer` headers with vector provenance tracking.
 - Supports **HTTP/1.0, HTTP/1.1, HTTP/2, and HTTP/3**, IPv4, IPv6 (including bracketed `[::1]`), hostnames, and ports.
-- Detects and classifies classic attacks: XSS, SQL injection, CSRF, DoS, directory traversal, spam, information disclosure, remote file execution (`rfe`/`ref`), and local file inclusion (`lfi`).
-- Detects modern web attacks (`--modern`):
+- Detects and classifies the full spectrum of web attacks out of the box (classic & modern):
+  - **Classic Web Attacks**: XSS, SQL injection, CSRF, DoS, directory traversal, spam, information disclosure, remote file execution (`rfe`/`ref`), and local file inclusion (`lfi`).
   - **NoSQL Injection**: MongoDB/CouchDB operators (`$ne`, `$gt`, `$where`, `$regex`).
   - **Prototype Pollution**: JavaScript runtime manipulation (`__proto__`, `constructor.prototype`).
   - **CRLF Injection**: Header splitting and poisoning (`%0d%0aSet-Cookie:`, `Location:`).
@@ -53,7 +53,7 @@ The filter file ships with this repository. If missing, Scalp! downloads it auto
 Run directly from the root directory:
 
 ```bash
-python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
+python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --anathema
 ```
 
 Or analyze rotated gzip logs directly:
@@ -89,8 +89,8 @@ options:
   -e, --exhaustive      Report all matching attack types per line instead of stopping at first match
   -u, --tough           Enable deep payload anti-evasion decoding (enabled by default)
   -c, --except          Save non-parsed log lines into scalp_except.txt
-  --modern              Also load modern attack rules (SSRF, Log4Shell, SSTI, Spring4Shell, Cloud Probes)
   --anathema            Enable the Anathema behavioral heuristic scoring module
+  --modern              Legacy flag (all attack signatures are active by default)
 ```
 
 ### Attack Classes

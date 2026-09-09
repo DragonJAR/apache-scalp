@@ -113,11 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Save non-parsed log lines into scalp_except.txt",
     )
 
-    # Modern capabilities
+    # Legacy compatibility
     parser.add_argument(
         "--modern",
         action="store_true",
-        help="Also load modern attack rules (SSRF, Log4Shell, SSTI, Spring4Shell, Cloud Probes)",
+        help="Legacy flag (modern attack signatures are now integrated and active by default)",
     )
     parser.add_argument(
         "--anathema",

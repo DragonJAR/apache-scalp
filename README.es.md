@@ -12,8 +12,8 @@ Este repositorio es una **modernización del fork de [Nanopony](https://github.c
 - Soporta logs en **texto plano y comprimidos con gzip (`.gz`)** de forma totalmente transparente.
 - Inspecciona **múltiples vectores HTTP**: URL de la petición, cabecera `User-Agent` y cabecera `Referer`, registrando la procedencia del vector.
 - Soporta tráfico **HTTP/1.0, HTTP/1.1, HTTP/2 y HTTP/3**, IPv4, IPv6 (incluyendo `[::1]`), nombres de host y puertos.
-- Detecta y clasifica ataques clásicos: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, ejecución de archivos remotos (`rfe`/`ref`) y local file inclusion (`lfi`).
-- Detecta ataques web modernos (`--modern`):
+- Detecta y clasifica el espectro completo de ataques web de forma predeterminada (clásicos y modernos):
+  - **Ataques Web Clásicos**: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, ejecución de archivos remotos (`rfe`/`ref`) y local file inclusion (`lfi`).
   - **NoSQL Injection**: Operadores BSON de MongoDB/CouchDB (`$ne`, `$gt`, `$where`, `$regex`).
   - **Prototype Pollution**: Manipulación de prototipos en JavaScript/Node.js (`__proto__`, `constructor.prototype`).
   - **CRLF Injection**: Envenenamiento y división de cabeceras HTTP (`%0d%0aSet-Cookie:`, `Location:`).
@@ -53,7 +53,7 @@ El archivo de filtros viene incluido en este repositorio. Si falta, Scalp! lo de
 Ejecución directa desde el directorio raíz:
 
 ```bash
-python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
+python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --anathema
 ```
 
 O analizando logs rotados y comprimidos con gzip:
@@ -89,8 +89,8 @@ options:
   -e, --exhaustive      Reporta todas las coincidencias por línea en vez de parar en la primera
   -u, --tough           Habilita decodificación profunda anti-evasión (habilitado por defecto)
   -c, --except          Guarda líneas no parseadas en scalp_except.txt
-  --modern              Carga además las firmas de ataques modernos (SSRF, Log4Shell, SSTI, Spring4Shell, Cloud Probes)
   --anathema            Habilita el módulo de análisis heurístico y comportamiento Anathema
+  --modern              Flag heredado (todas las firmas de ataque están activas por defecto)
 ```
 
 ### Clases de Ataques
