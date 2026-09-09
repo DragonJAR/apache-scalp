@@ -118,7 +118,7 @@ options:
 
 ## 🧪 Pruebas Automatizadas
 
-Ejecutá la suite completa con pytest:
+Ejecutá la suite completa con pytest (63 pruebas unitarias y de integración que validan el parser, normalizador, motor de reglas, heurística y reporteros):
 
 ```bash
 pytest

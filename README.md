@@ -118,7 +118,7 @@ options:
 
 ## 🧪 Testing
 
-Run the test suite with pytest:
+Run the test suite with pytest (63 unit and integration tests covering parser, anti-evasion decoder, rules engine, heuristics, and reporters):
 
 ```bash
 pytest
