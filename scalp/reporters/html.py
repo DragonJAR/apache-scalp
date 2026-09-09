@@ -176,9 +176,13 @@ class HtmlReporter(BaseReporter):
                 )
                 for m in impacts_dict[impact]:
                     section_html.append(f'  <div class="match-item">')
-                    section_html.append(f'    <div class="match-top">')
+                    status_badge = (
+                        f'<span class="badge badge-danger">HTTP {m.entry.status_code}</span>'
+                        if m.entry.status_code in (200, 201, 204, 500)
+                        else f'<span class="badge badge-info">HTTP {m.entry.status_code}</span>'
+                    )
                     section_html.append(
-                        f'      <span class="meta"><b>IP:</b> {html.escape(m.entry.ip)} &nbsp;|&nbsp; <b>Method:</b> {html.escape(m.entry.method)}</span>'
+                        f'      <span class="meta"><b>IP:</b> {html.escape(m.entry.ip)} &nbsp;|&nbsp; <b>Method:</b> {html.escape(m.entry.method)} &nbsp;|&nbsp; {status_badge}</span>'
                     )
                     section_html.append(f'      <span class="badge {badge_class}">Impact {impact}</span>')
                     section_html.append(f'    </div>')

@@ -6,9 +6,9 @@ def test_load_bundled_default_filter_xml():
     xml_path = Path("default_filter.xml")
     assert xml_path.exists()
     rules = RuleLoader.load_xml(str(xml_path))
-    assert len(rules) == 79
+    assert len(rules) == 83
     all_tags = set().union(*(r.tags for r in rules))
-    assert {"sqli", "xss", "lfi", "rfe", "ssrf", "log4j", "ssti", "spring", "probe"}.issubset(all_tags)
+    assert {"sqli", "xss", "lfi", "rfe", "ssrf", "log4j", "ssti", "spring", "probe", "nosql", "pollution", "crlf", "rce"}.issubset(all_tags)
     # Ensure all rules have an id, pattern, and at least one tag
     for r in rules:
         assert r.rule_id != ""

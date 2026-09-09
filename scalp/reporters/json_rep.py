@@ -42,6 +42,7 @@ class JsonReporter(BaseReporter):
                     "description": m.rule.description,
                     "matched_token": m.matched_string,
                     "matched_field": getattr(m, "matched_field", "url"),
+                    "potential_execution": m.entry.status_code in (200, 201, 204, 301, 302, 500),
                     "raw_line": m.entry.raw_line,
                 }
                 for m in result.matches

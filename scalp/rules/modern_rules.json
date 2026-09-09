@@ -10,7 +10,7 @@
     },
     {
       "id": "ssrf_01",
-      "pattern": "(?:(?:https?|ftp|gopher|dict|tftp|ldap|file)://(?:169\\.254\\.169\\.254|metadata\\.google\\.internal|metadata\\.goog|127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0|\\[::1\\]|(?:10|172\\.(?:1[6-9]|2[0-9]|3[01])|192\\.168)\\.\\d+\\.\\d+))|(?:/latest/meta-data|/metadata/instance|/computeMetadata/v1)",
+      "pattern": "(?:(?:https?|ftp|gopher|dict|tftp|ldap|file)://(?:169\\.254\\.169\\.254|2852039166|0xa9\\.?0xfe\\.?0xa9\\.?0xfe|0xa9fea9fe|0251\\.0376\\.0249\\.0376|100\\.100\\.100\\.200|metadata\\.google\\.internal|metadata\\.goog|127\\.0\\.0\\.1|2130706433|0x7f000001|127\\.1\\b|localhost|0\\.0\\.0\\.0|\\[::1\\]|\\[::ffff:(?:169\\.254\\.169\\.254|127\\.0\\.0\\.1)\\]|\\[0:0:0:0:0:ffff:a9fe:a9fe\\]|(?:10|172\\.(?:1[6-9]|2[0-9]|3[01])|192\\.168)\\.\\d+\\.\\d+))|(?:/latest/meta-data|/metadata/instance|/computeMetadata/v1|/opc/v1/instance|/openstack/latest/meta_data)",
       "description": "Server-Side Request Forgery (SSRF) targeting Cloud Metadata or Private Subnets",
       "impact": 9,
       "tags": ["ssrf", "cloud", "id"]
@@ -35,6 +35,34 @@
       "description": "Sensitive file, environment, Actuator, or GraphQL introspection probe",
       "impact": 6,
       "tags": ["probe", "id"]
+    },
+    {
+      "id": "nosql_01",
+      "pattern": "(?:\\$(?:ne|eq|gt|gte|lt|lte|in|nin|where|regex|exists|all|size|mod|text|expr)\\b)|(?:\\[\\$(?:ne|eq|gt|gte|lt|lte|in|nin|where|regex)\\])|(?:(?:\"|')\\$(?:ne|eq|gt|gte|lt|lte|in|nin|where|regex)(?:\"|')\\s*:)",
+      "description": "NoSQL injection attempt (MongoDB/CouchDB operators)",
+      "impact": 8,
+      "tags": ["nosql", "sqli", "id"]
+    },
+    {
+      "id": "pollution_01",
+      "pattern": "(?:__(?:proto|lookupGetter|lookupSetter)__|constructor\\[(?:\"|')?prototype(?:\"|')?\\]|prototype\\.(?:isAdmin|authenticated|polluted|status|role))",
+      "description": "Prototype pollution injection targeting JavaScript runtimes",
+      "impact": 8,
+      "tags": ["pollution", "rfe"]
+    },
+    {
+      "id": "crlf_01",
+      "pattern": "(?:(?:%0d|%0a|\\r|\\n)+(?:Set-Cookie|Location|Content-Type|X-Forwarded|Transfer-Encoding|Host)\\s*:)|(?:%0d%0a)",
+      "description": "CRLF injection / HTTP response splitting attack",
+      "impact": 7,
+      "tags": ["crlf", "injection"]
+    },
+    {
+      "id": "rce_01",
+      "pattern": "(?:\\(\\)\\s*\\{\\s*:\\s*;\\s*\\}\\s*;)|(?:[;&|`]\\s*(?:cat\\s+/etc/(?:passwd|shadow|hosts)|(?:/bin/)?(?:bash|sh|zsh)\\s+-i|(?:curl|wget)\\s+https?://|whoami|id\\b|uname\\s+-a|powershell(?:\\.exe)?\\s+|cmd(?:\\.exe)?\\s+/c))|(?:\\$\\(\\s*(?:whoami|id|uname|cat|curl|wget)\\b.*?\\))",
+      "description": "OS command injection or Shellshock (CVE-2014-6271)",
+      "impact": 10,
+      "tags": ["rce", "cmd", "rfe"]
     }
   ]
 }

@@ -58,6 +58,9 @@ class ScalpEngine:
                 # Malformed regex in rule set skipped gracefully
                 pass
 
+        # Sort compiled rules by impact descending so highest-severity rules match first
+        self._compiled_rules.sort(key=lambda item: item[0].impact, reverse=True)
+
     def scan_file(self, filepath: str) -> ScanResult:
         """Processes a log file in a single pass with O(1) memory footprint."""
         start_time = time.time()

@@ -47,7 +47,7 @@ class TextReporter(BaseReporter):
                     out.write(f"\n  ### Impact {impact} ({len(matches_list)} hits)\n")
                     for m in matches_list:
                         vector = getattr(m, "matched_field", "url")
-                        out.write(f"    - IP: {m.entry.ip} | Method: {m.entry.method} | URL: {m.entry.url}\n")
+                        out.write(f"    - IP: {m.entry.ip} | Method: {m.entry.method} | Status: {m.entry.status_code} | URL: {m.entry.url}\n")
                         out.write(f"      Rule [{m.rule.rule_id}]: \"{m.rule.description}\"\n")
                         out.write(f"      Vector: {vector} | Matched Token: {m.matched_string}\n")
                         out.write(f"      Raw Line: {m.entry.raw_line}\n\n")

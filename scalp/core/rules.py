@@ -25,6 +25,11 @@ ATTACK_NAMES = {
     "ssti": "Server-Side Template Injection",
     "deserialization": "Insecure Deserialization",
     "probe": "Scanner / Sensitive File Probe",
+    "nosql": "NoSQL Injection",
+    "pollution": "Prototype Pollution",
+    "crlf": "CRLF / Header Injection",
+    "rce": "Remote Code Execution / Shellshock",
+    "cmd": "Command Injection",
 }
 
 
