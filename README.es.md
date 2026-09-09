@@ -8,11 +8,13 @@ Este repositorio es una **modernización del fork de [Nanopony](https://github.c
 
 ## 🎯 Qué Hace
 
-- Escanea los logs de acceso de Apache línea por línea y los compara contra el set de expresiones regulares `default_filter.xml` de PHPIDS.
-- Detecta y clasifica ataques: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, referencia a archivos remotos y local file inclusion.
-- Reporta cada coincidencia con su regla, puntaje de impacto, descripción y tags.
-- Incluye el módulo heurístico **Anathema** (de Nanopony) para scoring de ataques por comportamiento.
-- Genera resultados en TEXT, XML o HTML.
+- Escanea logs de acceso de Apache y Nginx línea por línea contra las reglas `default_filter.xml` de PHPIDS y firmas modernas en JSON.
+- Soporta tráfico **HTTP/1.0, HTTP/1.1, HTTP/2 y HTTP/3**, IPv4 e IPv6.
+- Detecta y clasifica ataques clásicos: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, ejecución de archivos remotos (`rfe`/`ref`) y local file inclusion.
+- Detecta ataques web modernos (`--modern`): SSRF (metadatos cloud AWS/GCP/Azure), Log4Shell/JNDI injection, SSTI, Spring4Shell y sondas a archivos sensibles/APIs.
+- Incluye el módulo heurístico integrado **Anathema** (`--anathema`) para scoring de ataques por comportamiento y seguimiento de IPs maliciosas.
+- Decodificador anti-evasión multicapa: desescape URL recursivo, entidades HTML y eliminación de bytes nulos.
+- Genera resultados en TEXT, XML, HTML5 moderno responsivo o JSON (para SIEM y pipelines de CI/CD).
 
 ## 📦 Instalación
 
@@ -26,68 +28,87 @@ pip install -r requirements.txt
 
 | Herramienta | Propósito |
 |------|---------|
-| Python 3 | Runtime |
+| Python 3.10+ | Runtime |
 | `regex` (ver `requirements.txt`) | Motor de expresiones regulares avanzado |
-| Log de acceso de Apache | Datos de entrada |
+| Log de acceso de Apache / Nginx | Datos de entrada |
 | `default_filter.xml` (incluido) | Firmas de ataque de PHPIDS |
+| `scalp/rules/modern_rules.json` (incluido) | Firmas de ataque modernas |
 
 El archivo de filtros viene incluido en este repositorio. Si falta, Scalp! lo descarga automáticamente desde el [proyecto PHPIDS](https://github.com/PHPIDS/PHPIDS/blob/master/lib/IDS/default_filter.xml).
 
 ## 🚀 Uso
 
 ```bash
-python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html
+python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
 ```
 
 ```text
-Scalp the apache log! by Romain Gaucher
-usage:  ./scalp.py [--log|-l log_file] [--filters|-f filter_file] [--period time-frame] [OPTIONS] [--attack a1,a2,..,an]
-                   [--sample|-s 4.2]
-   --log       |-l:  el archivo de log de Apache './access_log' por defecto
-   --filters   |-f:  el archivo de filtros './default_filter.xml' por defecto
-   --exhaustive|-e:  reporta todos los tipos de ataques detectados sin detenerse en el primero
-   --tough     |-u:  intenta decodificar los vectores de ataque potenciales (puede aumentar el tiempo de análisis)
-   --period    |-p:  el período se especifica en el mismo formato de los logs de Apache usando * como wild-card
-                     ej: 04/Apr/2008:15:45;*/Mai/2008
-   --html      |-h:  genera una salida HTML
-   --xml       |-x:  genera una salida XML
-   --text      |-t:  genera una salida de texto simple (por defecto)
-   --except    |-c:  genera un archivo con los logs no examinados (logs mal formados, etc.)
-   --attack    |-a:  especifica la lista de ataques a buscar
-                     lista: xss, sqli, csrf, dos, dt, spam, id, ref, lfi
-                     ej: xss,sqli,lfi,ref
-   --ignore-ip|-i:  lista de direcciones IP a excluir (separadas por coma)
-   --ignore-subnet|-n:  lista de subredes a excluir (separadas por coma)
-   --output    |-o:  directorio de salida; por defecto, scalp intenta escribir en el mismo
-                     directorio del archivo de log
-   --sample    |-s:  usa una muestra aleatoria de líneas; el número (float en [0,100]) es el
-                     porcentaje, ej: --sample 0.1 para 1/1000
+usage: scalp [--help] [-V] [-l LOG] [-f FILTERS] [-o OUTPUT] [-h] [-x] [-t]
+             [--json] [-a ATTACK] [-p PERIOD] [-s SAMPLE] [-i IGNORE_IP]
+             [-n IGNORE_SUBNET] [-e] [-u] [-c] [--modern] [--anathema]
+
+Scalp! Apache/Nginx attack analyzer based on PHPIDS and modern signatures.
+
+options:
+  --help                Muestra este mensaje de ayuda y sale.
+  -V, --version         Muestra la versión instalada.
+  -l, --log LOG         Ruta al archivo de log de Apache/Nginx (por defecto: access_log)
+  -f, --filters FILTERS Ruta al archivo de filtros (XML o JSON)
+  -o, --output OUTPUT   Directorio donde escribir los reportes (por defecto: directorio actual)
+  -h, --html            Genera un reporte en HTML5 responsivo
+  -x, --xml             Genera un reporte en formato XML
+  -t, --text            Genera un reporte en texto plano
+  --json                Genera un reporte estructurado en JSON
+  -a, --attack ATTACK   Lista separada por comas de tipos de ataque a buscar (ej: xss,sqli,lfi,ssrf,log4j)
+  -p, --period PERIOD   Rango de fechas a analizar (ej: '04/Apr/2024:15:45;10/May/2024:23:59')
+  -s, --sample SAMPLE   Porcentaje de muestra de líneas a analizar (0.0 a 100.0, por defecto: 100.0)
+  -i, --ignore-ip IGNORE_IP
+                        Lista de direcciones IP a excluir (separadas por coma)
+  -n, --ignore-subnet IGNORE_SUBNET
+                        Lista de subredes/CIDR a excluir (ej: 192.168.1.0/24)
+  -e, --exhaustive      Reporta todas las coincidencias por línea en vez de parar en la primera
+  -u, --tough           Habilita decodificación profunda anti-evasión (habilitado por defecto)
+  -c, --except          Guarda líneas no parseadas en scalp_except.txt
+  --modern              Carga además las firmas de ataques modernos (SSRF, Log4Shell, SSTI, Spring4Shell, Cloud Probes)
+  --anathema            Habilita el módulo de análisis heurístico y comportamiento Anathema
 ```
 
 ### Clases de Ataques
 
-| Flag | Clase de ataque |
-|------|--------------|
-| `xss` | Cross-site scripting |
-| `sqli` | Inyección SQL |
-| `csrf` | Cross-site request forgery |
-| `dos` | Denegación de servicio |
-| `dt` | Directory traversal |
-| `spam` | Spam |
-| `id` | Divulgación de información |
-| `ref` | Referencia a archivos remotos |
-| `lfi` | Local file inclusion |
+| Flag | Clase de ataque | Descripción |
+|------|-----------------|-------------|
+| `xss` | Cross-site scripting | Inyección de scripts ejecutables en navegador y etiquetas HTML |
+| `sqli` | Inyección SQL | Manipulación sintáctica SQL, inyección de comentarios, blind booleano |
+| `csrf` | Cross-site request forgery | Acciones no autorizadas en nombre de usuarios autenticados |
+| `dos` | Denegación de servicio | Patrones pesados de agotamiento de recursos del servidor |
+| `dt` | Directory traversal | Secuencias de escape de directorios (`../` y equivalentes URL-encoded) |
+| `spam` | Spam | Bots de spam en formularios, libros de visitas y comentarios |
+| `id` | Divulgación de información | Fugas de código fuente, tokens de servidor, endpoints de debug |
+| `rfe` / `ref` | Ejecución de archivos remotos | Inyección de código, inclusiones remotas y lookups JNDI/Log4j |
+| `lfi` | Local file inclusion | Lectura de archivos locales del servidor (passwd, shadow, config) |
+| `ssrf` | Server-side request forgery | Acceso a metadatos cloud (AWS/GCP/Azure) o subredes privadas |
+| `log4j` | Log4Shell | Lookups JNDI (`${jndi:ldap://...}`) y variantes ofuscadas |
+| `ssti` | Inyección de plantillas | Ataques a motores Jinja2, Twig, Spring EL y Freemarker |
+| `spring` | Spring4Shell | Explotación de ClassLoader y vectores de deserialización |
+| `probe` | Sondeos y reconocimiento | Sondeos a `.env`, `.git`, endpoints Actuator y Swagger UI |
+
+## 🧪 Pruebas Automatizadas
+
+Ejecutá la suite completa con pytest:
+
+```bash
+pytest
+```
 
 ## 🧠 Módulo Heurístico Anathema
 
-El paquete `anathema/` agrega una capa heurística (de Nanopony) que puntúa las peticiones más allá del matching por regex, analizando patrones de IP, método, URL y user-agent contra una base de firmas en JSON.
+El paquete `anathema/` y la opción `--anathema` activan la capa heurística basada en comportamiento (creada por Nanopony y modernizada por DragonJAR) que analiza el tráfico detectando patrones de escáneres web, sondas sospechosas y rastreo de IPs reincidentes.
 
 ## ⚠️ Limitaciones
 
-1. **Apache no registra los cuerpos POST por defecto** — la detección de ataques se basa principalmente en GET, salvo que tu formato de log capture los cuerpos de las peticiones.
-2. **Detección basada en regex** — payloads sofisticados u ofuscados pueden evadir el matching; usa `--tough` para decodificar vectores codificados.
-3. **Código heredado** — la herramienta nació en 2008 (era Python 2); este fork parchea la compatibilidad con Python 3, pero el motor sigue siendo simple por diseño.
-4. **Suposiciones sobre el formato del log** — formatos de log de Apache no estándar pueden no parsear correctamente.
+1. **Apache no registra los cuerpos POST por defecto** — la detección se basa principalmente en la línea de petición y la query string, a menos que el formato de log capture el body.
+2. **Detección basada en regex** — payloads altamente personalizados pueden evadir firmas fijas; el normalizador anti-evasión se ejecuta automáticamente para mitigar ofuscaciones.
+3. **Formatos de log soportados** — soporta de forma nativa los formatos estándar CLF, Combined, VHost Combined y Nginx.
 
 ## 🏛️ Historia y Créditos
 

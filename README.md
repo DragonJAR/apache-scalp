@@ -8,11 +8,13 @@ This repository is a **modernization of [Nanopony's fork](https://github.com/nan
 
 ## 🎯 What It Does
 
-- Scans Apache access logs line by line and matches them against the PHPIDS `default_filter.xml` regex rule set.
-- Detects and classifies attacks: XSS, SQL injection, CSRF, DoS, directory traversal, spam, information disclosure, remote file reference, and local file inclusion.
-- Reports matches per rule with impact score, description, and tags.
-- Includes the **Anathema** heuristic module (by Nanopony) for behavioral attack scoring.
-- Outputs results in TEXT, XML, or HTML.
+- Scans Apache and Nginx access logs line by line against the PHPIDS `default_filter.xml` regex rule set and modern JSON signatures.
+- Supports **HTTP/1.0, HTTP/1.1, HTTP/2, and HTTP/3**, IPv4, and IPv6 traffic.
+- Detects and classifies classic attacks: XSS, SQL injection, CSRF, DoS, directory traversal, spam, information disclosure, remote file execution (`rfe`/`ref`), and local file inclusion.
+- Detects modern web attacks (`--modern`): SSRF (Cloud metadata AWS/GCP/Azure), Log4Shell/JNDI injection, SSTI, Spring4Shell, and sensitive file/API probes.
+- Includes the integrated **Anathema** heuristic module (`--anathema`) for behavioral attack scoring and malicious IP tracking.
+- Multi-pass anti-evasion decoder: recursive URL unquoting, HTML entity unescaping, and null-byte elimination.
+- Outputs results in TEXT, XML, modern responsive HTML5, or JSON (for SIEM and CI/CD pipelines).
 
 ## 📦 Installation
 
@@ -26,69 +28,87 @@ pip install -r requirements.txt
 
 | Tool | Purpose |
 |------|---------|
-| Python 3 | Runtime |
+| Python 3.10+ | Runtime |
 | `regex` (see `requirements.txt`) | Advanced regular expression engine |
-| Apache access log | Input data |
+| Apache / Nginx access log | Input data |
 | `default_filter.xml` (bundled) | PHPIDS attack signatures |
+| `scalp/rules/modern_rules.json` (bundled) | Modern attack signatures |
 
 The filter file ships with this repository. If missing, Scalp! downloads it automatically from the [PHPIDS project](https://github.com/PHPIDS/PHPIDS/blob/master/lib/IDS/default_filter.xml).
 
 ## 🚀 Usage
 
 ```bash
-python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html
+python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
 ```
 
 ```text
-Scalp the apache log! by Romain Gaucher
-usage:  ./scalp.py [--log|-l log_file] [--filters|-f filter_file] [--period time-frame] [OPTIONS] [--attack a1,a2,..,an]
-                   [--sample|-s 4.2]
-   --log       |-l:  the apache log file './access_log' by default
-   --filters   |-f:  the filter file     './default_filter.xml' by default
-   --exhaustive|-e:  will report all type of attacks detected and not stop at the first found
-   --tough     |-u:  try to decode the potential attack vectors (may increase the examination time)
-   --period    |-p:  the period must be specified in the same format as in the Apache logs using * as wild-card
-                     ex: 04/Apr/2008:15:45;*/Mai/2008
-   --html      |-h:  generate an HTML output
-   --xml       |-x:  generate an XML output
-   --text      |-t:  generate a simple text output (default)
-   --except    |-c:  generate a file that contains the non examined logs due to the main regular
-                     expression; ill-formed Apache log etc.
-   --attack    |-a:  specify the list of attacks to look for
-                     list: xss, sqli, csrf, dos, dt, spam, id, ref, lfi
-                     ex: xss,sqli,lfi,ref
-   --ignore-ip|-i:  specify the list of IP Addresses to exclude (comma separated)
-   --ignore-subnet|-n:  specify the list of Subnets to exclude (comma separated)
-   --output    |-o:  specifying the output directory; by default, scalp will try to write in the
-                     same directory as the log file
-   --sample    |-s:  use a random sample of the lines, the number (float in [0,100]) is the
-                     percentage, ex: --sample 0.1 for 1/1000
+usage: scalp [--help] [-V] [-l LOG] [-f FILTERS] [-o OUTPUT] [-h] [-x] [-t]
+             [--json] [-a ATTACK] [-p PERIOD] [-s SAMPLE] [-i IGNORE_IP]
+             [-n IGNORE_SUBNET] [-e] [-u] [-c] [--modern] [--anathema]
+
+Scalp! Apache/Nginx attack analyzer based on PHPIDS and modern signatures.
+
+options:
+  --help                Show this help message and exit.
+  -V, --version         Show version.
+  -l, --log LOG         Path to Apache/Nginx access log file (default: access_log)
+  -f, --filters FILTERS Path to rule filters file (XML or JSON)
+  -o, --output OUTPUT   Directory to write output files (default: current directory)
+  -h, --html            Generate an HTML report
+  -x, --xml             Generate an XML report
+  -t, --text            Generate a plain text report
+  --json                Generate a structured JSON report
+  -a, --attack ATTACK   Comma-separated list of attack tags to detect (e.g. xss,sqli,lfi,ssrf,log4j)
+  -p, --period PERIOD   Timeframe to analyze (e.g. '04/Apr/2024:15:45;10/May/2024:23:59')
+  -s, --sample SAMPLE   Percentage sample of lines to analyze (0.0 to 100.0, default: 100.0)
+  -i, --ignore-ip IGNORE_IP
+                        Comma-separated list of IP addresses to exclude
+  -n, --ignore-subnet IGNORE_SUBNET
+                        Comma-separated list of subnets/CIDR to exclude (e.g. 192.168.1.0/24)
+  -e, --exhaustive      Report all matching attack types per line instead of stopping at first match
+  -u, --tough           Enable deep payload anti-evasion decoding (enabled by default)
+  -c, --except          Save non-parsed log lines into scalp_except.txt
+  --modern              Also load modern attack rules (SSRF, Log4Shell, SSTI, Spring4Shell, Cloud Probes)
+  --anathema            Enable the Anathema behavioral heuristic scoring module
 ```
 
 ### Attack Classes
 
-| Flag | Attack class |
-|------|--------------|
-| `xss` | Cross-site scripting |
-| `sqli` | SQL injection |
-| `csrf` | Cross-site request forgery |
-| `dos` | Denial of service |
-| `dt` | Directory traversal |
-| `spam` | Spam |
-| `id` | Information disclosure |
-| `ref` | Remote file reference |
-| `lfi` | Local file inclusion |
+| Flag | Attack class | Description |
+|------|--------------|-------------|
+| `xss` | Cross-site scripting | Injection of browser-executable scripts and HTML tags |
+| `sqli` | SQL injection | SQL syntax manipulation, comment injection, boolean blind |
+| `csrf` | Cross-site request forgery | Unauthorized state-changing actions |
+| `dos` | Denial of service | Heavy resource exhaustion patterns |
+| `dt` | Directory traversal | Path traversal sequences (`../`, URL-encoded equivalents) |
+| `spam` | Spam | Forum, guestbook, and form submission spam bots |
+| `id` | Information disclosure | Source code leaks, server tokens, debug parameters |
+| `rfe` / `ref` | Remote file execution | Code injection, remote inclusions, Log4j/JNDI lookups |
+| `lfi` | Local file inclusion | Reading server configuration, shadow, and environment files |
+| `ssrf` | Server-side request forgery | Accessing AWS/GCP/Azure metadata or private subnets |
+| `log4j` | Log4Shell | JNDI lookups (`${jndi:ldap://...}`) and evasion variations |
+| `ssti` | Template injection | Jinja2, Twig, Spring EL, and Freemarker expression attacks |
+| `spring` | Spring4Shell | ClassLoader exploitation and deserialization vectors |
+| `probe` | Reconnaissance probes | Probes for `.env`, `.git`, Actuator endpoints, Swagger UI |
+
+## 🧪 Testing
+
+Run the test suite with pytest:
+
+```bash
+pytest
+```
 
 ## 🧠 Anathema Heuristic Module
 
-The `anathema/` package adds a heuristic layer (by Nanopony) that scores requests beyond pure regex matching, analyzing IP, method, URL, and user-agent patterns against a JSON signature base.
+The `anathema/` package and `--anathema` CLI switch activate a behavioral heuristic layer (originally by Nanopony, modernized by DragonJAR) that scores requests beyond pure regex matching, tracking repeat offending IPs, web scanners, and probe patterns against a signature base.
 
 ## ⚠️ Limitations
 
-1. **Apache does not log POST bodies by default** — attack detection is primarily GET-based unless your log format captures request bodies.
-2. **Regex-based detection** — sophisticated or obfuscated payloads may evade matching; use `--tough` to decode encoded vectors.
-3. **Legacy codebase** — the tool originates from 2008 (Python 2 era); this fork patches Python 3 compatibility but the engine remains simple by design.
-4. **Log format assumptions** — non-standard Apache log formats may not parse correctly.
+1. **Apache does not log POST bodies by default** — attack detection is primarily request-line and query-based unless your log format captures request bodies.
+2. **Regex-based detection** — highly custom or non-standard payloads may evade matching; payload normalizer runs automatically to decode nested encodings.
+3. **Log format variations** — supports standard CLF, Combined, VHost Combined, and Nginx formats.
 
 ## 🏛️ History & Credits
 
