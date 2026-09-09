@@ -81,8 +81,22 @@ class DateRangeFilter:
         return cls(start=start_dt, end=end_dt)
 
 
+def clean_ip_string(ip_str: str) -> str:
+    """Strips brackets, ports, and whitespace from IPv4, IPv6, and host strings."""
+    s = ip_str.strip()
+    if not s:
+        return ""
+    if s.startswith("["):
+        end_idx = s.find("]")
+        if end_idx != -1:
+            return s[1:end_idx].strip()
+    elif s.count(":") == 1:
+        return s.split(":", 1)[0].strip()
+    return s
+
+
 class NetworkFilter:
-    """Filters IPs based on exact IP addresses or CIDR network blocks."""
+    """Filters IPs based on exact IP addresses, CIDR network blocks, or hostnames."""
 
     def __init__(
         self,
@@ -91,14 +105,15 @@ class NetworkFilter:
     ):
         self._ips: Set[Union[ipaddress.IPv4Address, ipaddress.IPv6Address]] = set()
         self._subnets: List[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]] = []
+        self._hostnames: Set[str] = set()
 
         for ip_s in (excluded_ips or []):
-            clean = ip_s.strip()
+            clean = clean_ip_string(ip_s)
             if clean:
                 try:
                     self._ips.add(ipaddress.ip_address(clean))
                 except ValueError:
-                    pass
+                    self._hostnames.add(clean.lower())
 
         for subnet_s in (excluded_subnets or []):
             clean = subnet_s.strip()
@@ -110,7 +125,13 @@ class NetworkFilter:
 
     def is_excluded(self, ip_str: str) -> bool:
         """Returns True if the given IP is explicitly excluded or falls inside an excluded subnet."""
-        clean = ip_str.strip()
+        clean = clean_ip_string(ip_str)
+        if not clean:
+            return False
+
+        if clean.lower() in self._hostnames:
+            return True
+
         try:
             addr = ipaddress.ip_address(clean)
         except ValueError:

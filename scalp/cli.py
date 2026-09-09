@@ -209,24 +209,23 @@ def main(argv: list = None) -> int:
     short_name = log_path.name
     curdate = time.strftime("%Y%m%d_%H%M%S", time.localtime())
 
-    if len(result.matches) > 0 or not (args.html or args.xml or args.json):
-        print(f"Generating output in {odir}/")
-        if args.text:
-            out_file = odir / f"{short_name}_scalp_{curdate}.txt"
-            TextReporter.generate(result, str(out_file), source_name=short_name)
-            print(f"\tWritten text report to: {out_file}")
-        if args.html:
-            out_file = odir / f"{short_name}_scalp_{curdate}.html"
-            HtmlReporter.generate(result, str(out_file), source_name=short_name)
-            print(f"\tWritten HTML report to: {out_file}")
-        if args.xml:
-            out_file = odir / f"{short_name}_scalp_{curdate}.xml"
-            XmlReporter.generate(result, str(out_file), source_name=short_name)
-            print(f"\tWritten XML report to: {out_file}")
-        if args.json:
-            out_file = odir / f"{short_name}_scalp_{curdate}.json"
-            JsonReporter.generate(result, str(out_file), source_name=short_name)
-            print(f"\tWritten JSON report to: {out_file}")
+    print(f"Generating output in {odir}/")
+    if args.text:
+        out_file = odir / f"{short_name}_scalp_{curdate}.txt"
+        TextReporter.generate(result, str(out_file), source_name=short_name)
+        print(f"\tWritten text report to: {out_file}")
+    if args.html:
+        out_file = odir / f"{short_name}_scalp_{curdate}.html"
+        HtmlReporter.generate(result, str(out_file), source_name=short_name)
+        print(f"\tWritten HTML report to: {out_file}")
+    if args.xml:
+        out_file = odir / f"{short_name}_scalp_{curdate}.xml"
+        XmlReporter.generate(result, str(out_file), source_name=short_name)
+        print(f"\tWritten XML report to: {out_file}")
+    if args.json:
+        out_file = odir / f"{short_name}_scalp_{curdate}.json"
+        JsonReporter.generate(result, str(out_file), source_name=short_name)
+        print(f"\tWritten JSON report to: {out_file}")
 
     if args.save_unparsed and len(result.unmatched_lines) > 0:
         except_file = odir / "scalp_except.txt"

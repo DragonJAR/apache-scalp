@@ -41,6 +41,7 @@ class JsonReporter(BaseReporter):
                     "rule_id": m.rule.rule_id,
                     "description": m.rule.description,
                     "matched_token": m.matched_string,
+                    "matched_field": getattr(m, "matched_field", "url"),
                     "raw_line": m.entry.raw_line,
                 }
                 for m in result.matches

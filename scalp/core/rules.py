@@ -65,6 +65,9 @@ class RuleLoader:
                 if tag_elem.text:
                     tags.add(cls.normalize_tag(tag_elem.text))
 
+            if not tags:
+                tags = {"general"}
+
             if rule_text:
                 rules.append(
                     FilterRule(
@@ -91,6 +94,8 @@ class RuleLoader:
         rules: List[FilterRule] = []
         for item in data.get("rules", []):
             tags = {cls.normalize_tag(t) for t in item.get("tags", [])}
+            if not tags:
+                tags = {"general"}
             rules.append(
                 FilterRule(
                     rule_id=str(item.get("id", "")),

@@ -185,8 +185,9 @@ class HtmlReporter(BaseReporter):
                     section_html.append(
                         f'    <div class="reason"><b>Rule [{html.escape(m.rule.rule_id)}]:</b> {html.escape(m.rule.description)}</div>'
                     )
+                    matched_field = getattr(m, "matched_field", "url")
                     section_html.append(
-                        f'    <div class="log-line"><b>Target:</b> {html.escape(m.entry.url)}<br><b>Matched:</b> {html.escape(m.matched_string)}</div>'
+                        f'    <div class="log-line"><b>Vector:</b> {html.escape(matched_field)} &nbsp;|&nbsp; <b>Target:</b> {html.escape(m.entry.url)}<br><b>Matched:</b> {html.escape(m.matched_string)}</div>'
                     )
                     section_html.append(f'  </div>')
 
@@ -200,7 +201,7 @@ class HtmlReporter(BaseReporter):
             processed_lines=result.processed_lines,
             attack_classes_count=len(grouped),
             elapsed=result.elapsed_seconds,
-            attack_sections="\n".join(sections) if sections else "<p>No attack patterns detected.</p>",
+            attack_sections="\n".join(sections) if sections else "<p style='color: var(--success); font-weight: bold;'>No attack patterns detected. The analyzed log is clean.</p>",
         )
 
         with open(output_path, "w", encoding="utf-8") as f:

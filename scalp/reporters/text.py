@@ -34,6 +34,9 @@ class TextReporter(BaseReporter):
             out.write(f"Total lines processed: {result.processed_lines} / {result.total_lines}\n")
             out.write(f"Total attack matches: {len(result.matches)} (in {result.elapsed_seconds:.3f}s)\n\n")
 
+            if not grouped:
+                out.write("No attack patterns detected. The analyzed log is clean.\n")
+
             for tag, impacts_dict in grouped.items():
                 tag_name = ATTACK_NAMES.get(tag.lower(), tag.upper())
                 out.write(f"Attack: {tag_name} ({tag})\n")
@@ -43,7 +46,8 @@ class TextReporter(BaseReporter):
                     matches_list = impacts_dict[impact]
                     out.write(f"\n  ### Impact {impact} ({len(matches_list)} hits)\n")
                     for m in matches_list:
+                        vector = getattr(m, "matched_field", "url")
                         out.write(f"    - IP: {m.entry.ip} | Method: {m.entry.method} | URL: {m.entry.url}\n")
                         out.write(f"      Rule [{m.rule.rule_id}]: \"{m.rule.description}\"\n")
-                        out.write(f"      Matched Token: {m.matched_string}\n")
+                        out.write(f"      Vector: {vector} | Matched Token: {m.matched_string}\n")
                         out.write(f"      Raw Line: {m.entry.raw_line}\n\n")

@@ -33,3 +33,4 @@ class AttackMatch:
     rule: FilterRule
     matched_string: str
     tag: str
+    matched_field: str = "url"

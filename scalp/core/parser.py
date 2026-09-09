@@ -7,16 +7,16 @@ from scalp.core.models import LogEntry
 # Regex matching Common Log Format (CLF), Combined Log Format, and VHost Combined
 LOG_LINE_REGEX = re.compile(
     r'^(?:(?P<vhost>\S+)\s+)?'                          # Optional vhost prefix
-    r'(?P<ip>[0-9a-fA-F\.\:]+)\s+'                      # Client IP (IPv4 or IPv6)
+    r'(?P<ip>(?!-+\s)\[?[0-9a-zA-Z\.\:\-_]+\]?(?::\d+)?)\s+'  # Client IP (IPv4, IPv6, hostname, optional port)
     r'\S+\s+'                                           # Ident / remote logname
     r'(?P<user>\S+)\s+'                                 # Remote user
     r'\[(?P<time>[^\]]+)\]\s+'                          # [dd/Mon/yyyy:hh:mm:ss ±zzzz]
     r'"(?P<method>[A-Z]+)\s+'                           # Request method (GET, POST, etc.)
-    r'(?P<url>\S+)'                                     # Request URL (clean, no leading space)
+    r'(?P<url>.+?)'                                     # Request URL (clean or with spaces)
     r'(?:\s+(?P<proto>HTTP\/[\d\.]+))?"\s+'             # Protocol (HTTP/1.0, 1.1, 2, 2.0, 3)
     r'(?P<status>\d{3})\s+'                             # HTTP status code
     r'(?P<bytes>\d+|-)'                                 # Response bytes ('-' for none/304)
-    r'(?:\s+"(?P<referrer>[^"]*)"\s+"(?P<agent>[^"]*)")?' # Optional Referrer & User-Agent
+    r'(?:\s+"(?P<referrer>(?:[^"\\]|\\.)*)"\s+"(?P<agent>(?:[^"\\]|\\.)*)")?' # Optional Referrer & User-Agent
 )
 
 
@@ -53,12 +53,16 @@ class LogParser:
         bytes_sent = int(raw_bytes) if raw_bytes and raw_bytes != "-" else None
 
         referrer = data.get("referrer")
-        if referrer == "-":
+        if referrer == "-" or referrer == "":
             referrer = None
+        elif referrer:
+            referrer = referrer.replace(r'\"', '"')
 
         agent = data.get("agent")
-        if agent == "-":
+        if agent == "-" or agent == "":
             agent = None
+        elif agent:
+            agent = agent.replace(r'\"', '"')
 
         proto = data.get("proto") or "HTTP/1.1"
 

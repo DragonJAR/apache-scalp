@@ -84,31 +84,57 @@ class ScalpEngine:
 
             result.processed_lines += 1
 
-            # Payload normalization (anti-evasion)
-            search_target = (
-                PayloadNormalizer.normalize(entry.url)
-                if self.normalize_payloads
-                else entry.url
-            )
+            # Multi-vector inspection (URL, User-Agent, Referrer)
+            targets = [
+                (
+                    "url",
+                    PayloadNormalizer.normalize(entry.url)
+                    if self.normalize_payloads
+                    else entry.url,
+                )
+            ]
+            if entry.user_agent:
+                targets.append(
+                    (
+                        "user_agent",
+                        PayloadNormalizer.normalize(entry.user_agent)
+                        if self.normalize_payloads
+                        else entry.user_agent,
+                    )
+                )
+            if entry.referrer:
+                targets.append(
+                    (
+                        "referrer",
+                        PayloadNormalizer.normalize(entry.referrer)
+                        if self.normalize_payloads
+                        else entry.referrer,
+                    )
+                )
 
-            # Match rules against target URL and payload
-            matched = False
-            for rule, compiled in self._compiled_rules:
-                m = compiled.search(search_target)
-                if m:
-                    matched = True
-                    for tag in rule.tags:
-                        if not self.attack_types or tag.lower() in self.attack_types:
-                            result.matches.append(
-                                AttackMatch(
-                                    entry=entry,
-                                    rule=rule,
-                                    matched_string=m.group(0),
-                                    tag=tag,
+            # Match rules against target fields
+            line_matched = False
+            for field_name, search_target in targets:
+                for rule, compiled in self._compiled_rules:
+                    m = compiled.search(search_target)
+                    if m:
+                        line_matched = True
+                        effective_tags = rule.tags or {"general"}
+                        for tag in effective_tags:
+                            if not self.attack_types or tag.lower() in self.attack_types:
+                                result.matches.append(
+                                    AttackMatch(
+                                        entry=entry,
+                                        rule=rule,
+                                        matched_string=m.group(0),
+                                        tag=tag,
+                                        matched_field=field_name,
+                                    )
                                 )
-                            )
-                    if not self.exhaustive:
-                        break
+                        if not self.exhaustive:
+                            break
+                if line_matched and not self.exhaustive:
+                    break
 
             # Anathema behavioral evaluation
             if self.anathema:
