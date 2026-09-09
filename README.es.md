@@ -9,11 +9,23 @@ Este repositorio es una **modernización del fork de [Nanopony](https://github.c
 ## 🎯 Qué Hace
 
 - Escanea logs de acceso de Apache y Nginx línea por línea contra las reglas `default_filter.xml` de PHPIDS y firmas modernas en JSON.
-- Soporta tráfico **HTTP/1.0, HTTP/1.1, HTTP/2 y HTTP/3**, IPv4 e IPv6.
-- Detecta y clasifica ataques clásicos: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, ejecución de archivos remotos (`rfe`/`ref`) y local file inclusion.
-- Detecta ataques web modernos (`--modern`): SSRF (metadatos cloud AWS/GCP/Azure), Log4Shell/JNDI injection, SSTI, Spring4Shell y sondas a archivos sensibles/APIs.
+- Soporta logs en **texto plano y comprimidos con gzip (`.gz`)** de forma totalmente transparente.
+- Inspecciona **múltiples vectores HTTP**: URL de la petición, cabecera `User-Agent` y cabecera `Referer`, registrando la procedencia del vector.
+- Soporta tráfico **HTTP/1.0, HTTP/1.1, HTTP/2 y HTTP/3**, IPv4, IPv6 (incluyendo `[::1]`), nombres de host y puertos.
+- Detecta y clasifica ataques clásicos: XSS, inyección SQL, CSRF, DoS, directory traversal, spam, divulgación de información, ejecución de archivos remotos (`rfe`/`ref`) y local file inclusion (`lfi`).
+- Detecta ataques web modernos (`--modern`):
+  - **NoSQL Injection**: Operadores BSON de MongoDB/CouchDB (`$ne`, `$gt`, `$where`, `$regex`).
+  - **Prototype Pollution**: Manipulación de prototipos en JavaScript/Node.js (`__proto__`, `constructor.prototype`).
+  - **CRLF Injection**: Envenenamiento y división de cabeceras HTTP (`%0d%0aSet-Cookie:`, `Location:`).
+  - **Inyección de Comandos OS y Shellshock**: Sintaxis de shell (`() { :; };`, `$(...)`, encadenamiento `;`, `|`, `&`).
+  - **SSRF**: Metadatos cloud (AWS, GCP, Azure, Alibaba, Oracle) con evasiones de IP decimal, hexadecimal y octal.
+  - **Log4Shell/JNDI**: Inyección y variantes ofuscadas (`${jndi:...}`).
+  - **SSTI y Spring4Shell**: Explotación de motores de plantillas y ClassLoader.
+  - **Sondeos y Reconocimiento**: `.env`, `.git`, endpoints Actuator y Swagger UI / GraphQL.
+- Decodificador anti-evasión multicapa: desescape URL recursivo, entidades HTML, normalización Unicode NFKC (conversión de caracteres fullwidth), eliminación de bytes de control y extracción/decodificación de payloads Base64.
+- Priorización por severidad de impacto (10 a 0) para destacar exploits críticos.
+- Correlación con códigos de respuesta HTTP (resaltando ejecuciones potenciales `200/500` vs bloqueos `404/403`).
 - Incluye el módulo heurístico integrado **Anathema** (`--anathema`) para scoring de ataques por comportamiento y seguimiento de IPs maliciosas.
-- Decodificador anti-evasión multicapa: desescape URL recursivo, entidades HTML y eliminación de bytes nulos.
 - Genera resultados en TEXT, XML, HTML5 moderno responsivo o JSON (para SIEM y pipelines de CI/CD).
 
 ## 📦 Instalación
@@ -30,16 +42,24 @@ pip install -r requirements.txt
 |------|---------|
 | Python 3.10+ | Runtime |
 | `regex` (ver `requirements.txt`) | Motor de expresiones regulares avanzado |
-| Log de acceso de Apache / Nginx | Datos de entrada |
-| `default_filter.xml` (incluido) | Firmas de ataque de PHPIDS |
+| Log de acceso de Apache / Nginx (`.log`, `.txt` o `.gz`) | Datos de entrada |
+| `default_filter.xml` (incluido) | Firmas de ataque integradas |
 | `scalp/rules/modern_rules.json` (incluido) | Firmas de ataque modernas |
 
 El archivo de filtros viene incluido en este repositorio. Si falta, Scalp! lo descarga automáticamente desde el [proyecto PHPIDS](https://github.com/PHPIDS/PHPIDS/blob/master/lib/IDS/default_filter.xml).
 
 ## 🚀 Uso
 
+Ejecución directa desde el directorio raíz:
+
 ```bash
-python3 scalp/scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
+python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --modern --anathema
+```
+
+O analizando logs rotados y comprimidos con gzip:
+
+```bash
+python3 scalp.py -l /var/log/nginx/access.log.1.gz -o ./scalp-output --json
 ```
 
 ```text
@@ -52,14 +72,14 @@ Scalp! Apache/Nginx attack analyzer based on PHPIDS and modern signatures.
 options:
   --help                Muestra este mensaje de ayuda y sale.
   -V, --version         Muestra la versión instalada.
-  -l, --log LOG         Ruta al archivo de log de Apache/Nginx (por defecto: access_log)
+  -l, --log LOG         Ruta al archivo de log de Apache/Nginx (soporta archivos .gz)
   -f, --filters FILTERS Ruta al archivo de filtros (XML o JSON)
   -o, --output OUTPUT   Directorio donde escribir los reportes (por defecto: directorio actual)
   -h, --html            Genera un reporte en HTML5 responsivo
   -x, --xml             Genera un reporte en formato XML
   -t, --text            Genera un reporte en texto plano
   --json                Genera un reporte estructurado en JSON
-  -a, --attack ATTACK   Lista separada por comas de tipos de ataque a buscar (ej: xss,sqli,lfi,ssrf,log4j)
+  -a, --attack ATTACK   Lista de tipos de ataque a buscar (ej: xss,sqli,lfi,ssrf,log4j,nosql,rce)
   -p, --period PERIOD   Rango de fechas a analizar (ej: '04/Apr/2024:15:45;10/May/2024:23:59')
   -s, --sample SAMPLE   Porcentaje de muestra de líneas a analizar (0.0 a 100.0, por defecto: 100.0)
   -i, --ignore-ip IGNORE_IP
@@ -79,6 +99,10 @@ options:
 |------|-----------------|-------------|
 | `xss` | Cross-site scripting | Inyección de scripts ejecutables en navegador y etiquetas HTML |
 | `sqli` | Inyección SQL | Manipulación sintáctica SQL, inyección de comentarios, blind booleano |
+| `nosql` | Inyección NoSQL | Operadores BSON de MongoDB/CouchDB (`$ne`, `$where`, `$regex`, `$gt`) |
+| `pollution` | Prototype pollution | Inyección de propiedades y prototipos en JavaScript (`__proto__`) |
+| `crlf` | Inyección CRLF | División de respuestas HTTP e inyección de cabeceras (`%0d%0a`) |
+| `rce` / `cmd` | Ejecución de comandos | Sintaxis de shell (`() { :; };`, `$(...)`, encadenamiento `;`, `|`, `&`) |
 | `csrf` | Cross-site request forgery | Acciones no autorizadas en nombre de usuarios autenticados |
 | `dos` | Denegación de servicio | Patrones pesados de agotamiento de recursos del servidor |
 | `dt` | Directory traversal | Secuencias de escape de directorios (`../` y equivalentes URL-encoded) |
@@ -86,7 +110,7 @@ options:
 | `id` | Divulgación de información | Fugas de código fuente, tokens de servidor, endpoints de debug |
 | `rfe` / `ref` | Ejecución de archivos remotos | Inyección de código, inclusiones remotas y lookups JNDI/Log4j |
 | `lfi` | Local file inclusion | Lectura de archivos locales del servidor (passwd, shadow, config) |
-| `ssrf` | Server-side request forgery | Acceso a metadatos cloud (AWS/GCP/Azure) o subredes privadas |
+| `ssrf` | Server-side request forgery | Acceso a metadatos cloud (AWS, GCP, Azure, Alibaba, Oracle) |
 | `log4j` | Log4Shell | Lookups JNDI (`${jndi:ldap://...}`) y variantes ofuscadas |
 | `ssti` | Inyección de plantillas | Ataques a motores Jinja2, Twig, Spring EL y Freemarker |
 | `spring` | Spring4Shell | Explotación de ClassLoader y vectores de deserialización |
