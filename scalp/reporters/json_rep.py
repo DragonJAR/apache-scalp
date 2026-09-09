@@ -49,5 +49,14 @@ class JsonReporter(BaseReporter):
             ],
         }
 
+        if result.anathema:
+            data["anathema"] = {
+                "banned_ips": sorted(list(result.anathema.banned_ips)),
+                "violators_count": len(result.anathema.violators),
+                "violators": {
+                    ip: len(entries) for ip, entries in result.anathema.violators.items()
+                },
+            }
+
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

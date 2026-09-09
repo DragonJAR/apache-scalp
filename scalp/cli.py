@@ -196,6 +196,13 @@ def main(argv: list = None) -> int:
     print(f"\tProcessed {result.processed_lines} lines over {result.total_lines}")
     print(f"\tFound {len(result.matches)} attack patterns in {result.elapsed_seconds:.4f} s")
 
+    if result.anathema and (result.anathema.violators or result.anathema.banned_ips):
+        print("Anathema Behavioral Analysis:")
+        print(f"\tIdentified {len(result.anathema.violators)} suspicious violator IP(s)")
+        if result.anathema.banned_ips:
+            banned_list = ", ".join(sorted(result.anathema.banned_ips))
+            print(f"\tBanned {len(result.anathema.banned_ips)} malicious IP(s) (severity >= 10): {banned_list}")
+
     # Format selection (default to text if none specified)
     if not (args.html or args.xml or args.text or args.json):
         args.text = True

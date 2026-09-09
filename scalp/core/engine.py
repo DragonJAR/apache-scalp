@@ -19,6 +19,7 @@ class ScanResult:
     matches: List[AttackMatch] = field(default_factory=list)
     unmatched_lines: List[str] = field(default_factory=list)
     elapsed_seconds: float = 0.0
+    anathema: Optional[AnathemaAnalyzer] = None
 
 
 class ScalpEngine:
@@ -144,6 +145,9 @@ class ScalpEngine:
             # Anathema behavioral evaluation
             if self.anathema:
                 self.anathema.score_entry(entry)
+
+        if self.anathema:
+            result.anathema = self.anathema
 
         result.elapsed_seconds = time.time() - start_time
         return result

@@ -48,6 +48,8 @@ def test_cli_scan_with_anathema(tmp_path):
 
     assert proc.returncode == 0
     assert "Processed 2 lines" in proc.stdout
+    assert "Anathema Behavioral Analysis:" in proc.stdout
+    assert "Banned 1 malicious IP(s)" in proc.stdout
 
 def test_classic_scalp_py_entrypoint_forwards_to_cli(tmp_path):
     log_file = tmp_path / "entrypoint.log"

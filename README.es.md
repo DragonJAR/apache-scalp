@@ -56,6 +56,12 @@ Ejecución directa desde el directorio raíz:
 python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp-output --html --anathema
 ```
 
+O probar inmediatamente con el log de ejemplo multi-aplicación incluido:
+
+```bash
+python3 scalp.py -l examples/sample_access.log -f default_filter.xml -o ./scalp-output --html --json --anathema
+```
+
 O analizando logs rotados y comprimidos con gzip:
 
 ```bash
