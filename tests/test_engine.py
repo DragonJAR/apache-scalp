@@ -77,3 +77,71 @@ def test_engine_with_anathema_integration(tmp_path):
     engine.scan_file(str(log_file))
 
     assert anathema.is_violator("198.51.100.2") is True
+
+
+def test_engine_suppresses_false_positives_on_benign_query_parameter_keys(tmp_path):
+    # Rule 16 detects 'status=' and Rule 18 detects 'sort=' from PHPIDS
+    rules = [
+        FilterRule(
+            rule_id="r16",
+            pattern=r"(?:alert|status|execute)(?:\s*[^@\s\w\",.:\/+\-])",
+            description="Script methods",
+            impact=5,
+            tags={"rfe", "xss"},
+        ),
+        FilterRule(
+            rule_id="r18",
+            pattern=r"(?:join|sort|pop)(?:\s*[^@\s\w\",.:\/+\-])",
+            description="Array methods",
+            impact=4,
+            tags={"rfe", "xss"},
+        ),
+    ]
+
+    log_content = (
+        '10.0.0.1 - - [14/Oct/2024:08:00:00 +0000] "GET /api/v2/orders?status=shipped&offset=0&limit=25 HTTP/1.1" 200 1200 "-" "Mozilla/5.0"\n'
+        '10.0.0.2 - - [14/Oct/2024:08:01:00 +0000] "GET /catalog?category=clothing&sort=price_asc HTTP/1.1" 200 3400 "-" "Mozilla/5.0"\n'
+    )
+    log_file = tmp_path / "benign.log"
+    log_file.write_text(log_content, encoding="utf-8")
+
+    engine = ScalpEngine(rules=rules)
+    result = engine.scan_file(str(log_file))
+
+    # Standard query parameter keys 'status=' and 'sort=' must not trigger false positives
+    assert len(result.matches) == 0
+
+
+def test_engine_still_detects_attacks_in_query_parameter_values(tmp_path):
+    rules = [
+        FilterRule(
+            rule_id="sqli_1",
+            pattern=r"(?:union\s+select|or\s+\d+=\d+|'\s*or)",
+            description="SQL Injection",
+            impact=8,
+            tags={"sqli"},
+        ),
+        FilterRule(
+            rule_id="r16",
+            pattern=r"(?:alert|status|execute)(?:\s*[^@\s\w\",.:\/+\-])",
+            description="Script methods",
+            impact=5,
+            tags={"rfe", "xss"},
+        ),
+    ]
+
+    # Malicious SQLi in the 'status' parameter value
+    log_content = (
+        '10.0.0.1 - - [14/Oct/2024:08:00:00 +0000] "GET /api/v2/orders?status=shipped%27%20OR%201=1-- HTTP/1.1" 200 1200 "-" "Mozilla/5.0"\n'
+    )
+    log_file = tmp_path / "attack.log"
+    log_file.write_text(log_content, encoding="utf-8")
+
+    engine = ScalpEngine(rules=rules)
+    result = engine.scan_file(str(log_file))
+
+    # SQLi in the value must still be detected, while 'status=' is not flagged as RFE
+    assert len(result.matches) == 1
+    assert result.matches[0].rule.rule_id == "sqli_1"
+    assert result.matches[0].tag == "sqli"
+

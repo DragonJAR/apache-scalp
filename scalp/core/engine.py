@@ -62,6 +62,33 @@ class ScalpEngine:
         # Sort compiled rules by impact descending so highest-severity rules match first
         self._compiled_rules.sort(key=lambda item: item[0].impact, reverse=True)
 
+    @staticmethod
+    def _is_url_param_key_fp(matched_str: str, search_target: str, span: Tuple[int, int]) -> bool:
+        """Determines if a regex match in a URL or Referrer is merely a standard HTTP query parameter
+        key assignment (e.g. '?status=', '&sort=', '?hash=', '&name=') rather than an exploit payload.
+        """
+        stripped = matched_str.lstrip("?&")
+        if not stripped.endswith("="):
+            return False
+
+        param_name = stripped[:-1]
+        # Must be a standard alphanumeric/safe identifier without special exploit tokens
+        if not param_name or not re.match(r"^[a-zA-Z0-9_.-]+$", param_name):
+            return False
+
+        # Guard against prototype pollution keys like '__proto__'
+        if param_name.startswith("__") and param_name.endswith("__"):
+            return False
+
+        # Verify it occurs at a query parameter boundary in the search target
+        start, _ = span
+        if matched_str.startswith(("?", "&")):
+            return True
+        if start > 0 and search_target[start - 1] in ("?", "&"):
+            return True
+
+        return False
+
     def scan_file(self, filepath: str) -> ScanResult:
         """Processes a log file in a single pass with O(1) memory footprint."""
         start_time = time.time()
@@ -124,6 +151,12 @@ class ScalpEngine:
                 for rule, compiled in self._compiled_rules:
                     m = compiled.search(search_target)
                     if m:
+                        # Filter out false positives where a rule matches merely a standard HTTP parameter key
+                        if field_name in ("url", "referrer") and self._is_url_param_key_fp(
+                            m.group(0), search_target, m.span()
+                        ):
+                            continue
+
                         line_matched = True
                         effective_tags = rule.tags or {"general"}
                         for tag in effective_tags:

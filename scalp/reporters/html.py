@@ -1486,7 +1486,7 @@ class HtmlReporter(BaseReporter):
             top_stats_html,
             cls._build_explorer_markup(filter_options_html, total_matches, initial_rows_html),
             '    <footer>',
-            '      Scalp! Modernized Edition &bull; Maintained by <a href="https://www.DragonJAR.org" target="_blank" rel="noopener noreferrer">DragonJAR SAS</a> &bull; 100% Offline / Zero-CDN Self-Contained Security Report',
+            '      Scalp! Modernized Edition &bull; Maintained by <a href="https://www.DragonJAR.org" target="_blank" rel="noopener noreferrer">DragonJAR SAS</a>',
             '    </footer>',
             '  </div>',
             f'  <div id="scalp-toast" class="scalp-toast"></div>',
