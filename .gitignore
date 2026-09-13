@@ -49,5 +49,5 @@ scalp_except.txt
 /*.log
 
 # Internal generator scripts
-scripts/generate_enterprise_log.py
+scripts/generate_*.py
 

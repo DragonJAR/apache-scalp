@@ -59,7 +59,7 @@ python3 scalp.py -l /var/log/apache2/access.log -f default_filter.xml -o ./scalp
 Or test immediately with the included multi-app sample log:
 
 ```bash
-python3 scalp.py -l examples/sample_access.log -f default_filter.xml -o ./scalp-output --html --json --anathema
+python3 scalp.py -l examples/example.log -f default_filter.xml -o ./scalp-output --html --json --anathema
 ```
 
 Or analyze rotated gzip logs directly:
