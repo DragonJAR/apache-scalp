@@ -22,6 +22,8 @@ class DateRangeFilter:
         """Returns True if dt falls within [start, end]. None datetimes pass by default."""
         if dt is None:
             return True
+        if not self.start and not self.end:
+            return True
 
         # If one is timezone-aware and the other is naive, normalize comparison
         if self.start:
@@ -134,6 +136,9 @@ class NetworkFilter:
 
     def is_excluded(self, ip_str: str) -> bool:
         """Returns True if the given IP is explicitly excluded or falls inside an excluded subnet."""
+        if not self._ips and not self._subnets and not self._hostnames:
+            return False
+
         clean = clean_ip_string(ip_str)
         if not clean:
             return False

@@ -1,5 +1,5 @@
 from scalp.core.engine import ScalpEngine
-from scalp.core.exclusions import DateRangeFilter, NetworkFilter
+from scalp.core.exclusions import NetworkFilter
 from scalp.core.models import FilterRule
 from scalp.heuristics.anathema import AnathemaAnalyzer
 

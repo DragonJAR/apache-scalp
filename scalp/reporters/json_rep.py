@@ -1,7 +1,6 @@
 """JSON reporter for Scalp, designed for SIEM, DevSecOps pipelines, and automation."""
 from datetime import datetime
 import json
-import time
 from scalp.core.engine import ScanResult
 from scalp.core.rules import ATTACK_NAMES
 from scalp.reporters.base import BaseReporter

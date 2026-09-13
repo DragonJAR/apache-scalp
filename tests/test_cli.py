@@ -1,7 +1,5 @@
-from pathlib import Path
 import subprocess
 import sys
-import pytest
 
 def test_cli_help_flag():
     proc = subprocess.run([sys.executable, "-m", "scalp.cli", "--help"], capture_output=True, text=True)
@@ -67,3 +65,15 @@ def test_classic_scalp_py_entrypoint_forwards_to_cli(tmp_path):
     assert proc.returncode == 0
     txt_files = list(out_dir.glob("*_scalp_*.txt"))
     assert len(txt_files) == 1
+
+def test_cli_non_existent_custom_filter_errors(tmp_path):
+    log_file = tmp_path / "test.log"
+    log_file.write_text('127.0.0.1 - - [10/Oct/2024:12:00:00 +0000] "GET / HTTP/1.1" 200 100\n', encoding="utf-8")
+    proc = subprocess.run([
+        sys.executable, "-m", "scalp.cli",
+        "-l", str(log_file),
+        "-f", "definitely_does_not_exist_rules.xml"
+    ], capture_output=True, text=True)
+    assert proc.returncode == 1
+    assert "error: the filters file 'definitely_does_not_exist_rules.xml' doesn't exist" in proc.stdout
+

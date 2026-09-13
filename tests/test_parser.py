@@ -1,4 +1,3 @@
-import pytest
 from scalp.core.parser import LogParser
 
 def test_parse_combined_log_line():

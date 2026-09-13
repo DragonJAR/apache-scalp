@@ -1,4 +1,4 @@
-"""Plain text reporter for Scalp."""
+from collections import defaultdict
 import time
 from scalp.core.engine import ScanResult
 from scalp.core.rules import ATTACK_NAMES
@@ -17,15 +17,9 @@ class TextReporter(BaseReporter):
         curtime = time.strftime("%a-%d-%b-%Y %H:%M:%S", time.localtime())
 
         # Group matches: tag -> impact -> list of matches
-        grouped = {}
+        grouped = defaultdict(lambda: defaultdict(list))
         for match in result.matches:
-            tag = match.tag
-            impact = match.rule.impact
-            if tag not in grouped:
-                grouped[tag] = {}
-            if impact not in grouped[tag]:
-                grouped[tag][impact] = []
-            grouped[tag][impact].append(match)
+            grouped[match.tag][match.rule.impact].append(match)
 
         with open(output_path, "w", encoding="utf-8") as out:
             out.write(TXT_HEADER)

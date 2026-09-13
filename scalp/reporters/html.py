@@ -1,10 +1,9 @@
 """Modern, responsive, 100% self-contained (Zero-CDN) HTML5 reporter for Scalp."""
 from collections import Counter, defaultdict
-from datetime import datetime
 import html
 import json
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 from scalp.core.engine import ScanResult
 from scalp.core.rules import ATTACK_NAMES
 from scalp.reporters.base import BaseReporter
@@ -2533,52 +2532,57 @@ class HtmlReporter(BaseReporter):
         else:
             status_badge_html = '<span class="header-status-badge badge-info">ATTACK ACTIVITY DETECTED</span>'
 
-        # Precompute Forensics Aggregates
-        ip_counts = Counter(m.entry.ip for m in result.matches)
-        top_ips = ip_counts.most_common(8)
-
-        # Map IP to primary tag
-        ip_tag_counts: Dict[str, Counter] = {}
-        for m in result.matches:
-            ip_tag_counts.setdefault(m.entry.ip, Counter())[m.tag] += 1
-
-        target_counts = Counter(m.entry.url for m in result.matches)
-        top_targets = target_counts.most_common(8)
-        target_tag_counts: Dict[str, Counter] = {}
-        for m in result.matches:
-            target_tag_counts.setdefault(m.entry.url, Counter())[m.tag] += 1
-
-        cat_counts = Counter(m.tag for m in result.matches)
-        top_cats = cat_counts.most_common()
-
-        status_counts = Counter(m.entry.status_code for m in result.matches)
-        top_statuses = sorted(status_counts.items(), key=lambda x: x[1], reverse=True)
-
-        vector_counts = Counter(getattr(m, "matched_field", "url") for m in result.matches)
-
-        # Prepare JSON matches dataset
+        # Precompute Forensics Aggregates & Build JSON dataset in a single O(N) pass
+        ip_counts = Counter()
+        ip_tag_counts: Dict[str, Counter] = defaultdict(Counter)
+        target_counts = Counter()
+        target_tag_counts: Dict[str, Counter] = defaultdict(Counter)
+        cat_counts = Counter()
+        status_counts = Counter()
+        vector_counts = Counter()
         json_matches = []
+
         for idx, m in enumerate(result.matches, 1):
+            ip = m.entry.ip
+            url = m.entry.url
+            tag = m.tag
+            status = m.entry.status_code
+            vector = getattr(m, "matched_field", "url")
+            impact = int(m.rule.impact or 0)
+
+            ip_counts[ip] += 1
+            ip_tag_counts[ip][tag] += 1
+            target_counts[url] += 1
+            target_tag_counts[url][tag] += 1
+            cat_counts[tag] += 1
+            status_counts[status] += 1
+            vector_counts[vector] += 1
+
             ts_str = m.entry.timestamp.strftime("%Y-%m-%d %H:%M:%S") if m.entry.timestamp else ""
             json_matches.append({
                 "id": idx,
                 "time": ts_str,
-                "ip": m.entry.ip,
+                "ip": ip,
                 "method": m.entry.method,
-                "status": m.entry.status_code,
-                "impact": int(m.rule.impact or 0),
-                "tag": m.tag,
-                "cat": ATTACK_NAMES.get(m.tag.lower(), m.tag.upper()),
+                "status": status,
+                "impact": impact,
+                "tag": tag,
+                "cat": ATTACK_NAMES.get(tag.lower(), tag.upper()),
                 "rule": m.rule.rule_id,
                 "desc": m.rule.description,
-                "target": m.entry.url,
-                "vector": getattr(m, "matched_field", "url"),
+                "target": url,
+                "vector": vector,
                 "match": m.matched_string,
                 "ua": m.entry.user_agent or "",
                 "ref": m.entry.referrer or "",
                 "raw": m.entry.raw_line,
-                "is_exploit_200": bool(m.entry.status_code == 200 and int(m.rule.impact or 0) >= 7),
+                "is_exploit_200": bool(status == 200 and impact >= 7),
             })
+
+        top_ips = ip_counts.most_common(8)
+        top_targets = target_counts.most_common(8)
+        top_cats = cat_counts.most_common()
+        top_statuses = sorted(status_counts.items(), key=lambda x: x[1], reverse=True)
 
         json_payload = {
             "metadata": {
@@ -2683,7 +2687,7 @@ class HtmlReporter(BaseReporter):
             '      Scalp! Modernized Edition &bull; Maintained by <a href="https://www.DragonJAR.org" target="_blank" rel="noopener noreferrer">DragonJAR SAS</a>',
             '    </footer>',
             '  </div>',
-            f'  <div id="scalp-toast" class="scalp-toast"></div>',
+            '  <div id="scalp-toast" class="scalp-toast"></div>',
             f'  <script id="scalp-data" type="application/json">{embedded_json}</script>',
             f'  <script>{JS_SCRIPT}</script>',
             '</body>',
@@ -2722,7 +2726,7 @@ class HtmlReporter(BaseReporter):
 
         anathema_val = f"{banned_count:,}" if has_anathema else "N/A"
         anathema_sub = (
-            f"Severity &ge; 10 automatically banned"
+            "Severity &ge; 10 automatically banned"
             if has_anathema
             else "Module inactive (run with --anathema)"
         )

@@ -1,16 +1,11 @@
 """Tests covering edge cases, messy real-world logs, and multi-vector inspection."""
 import json
 from pathlib import Path
-import pytest
 from scalp.cli import main
 from scalp.core.engine import ScalpEngine
 from scalp.core.exclusions import NetworkFilter, clean_ip_string
-from scalp.core.models import FilterRule, LogEntry
+from scalp.core.models import FilterRule
 from scalp.core.parser import LogParser
-from scalp.core.rules import RuleLoader
-from scalp.reporters.html import HtmlReporter
-from scalp.reporters.json_rep import JsonReporter
-from scalp.reporters.text import TextReporter
 
 
 def test_clean_ip_string_strips_brackets_and_ports():

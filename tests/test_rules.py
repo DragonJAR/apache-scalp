@@ -1,5 +1,4 @@
 from pathlib import Path
-import pytest
 from scalp.core.rules import RuleLoader
 
 def test_load_bundled_default_filter_xml():

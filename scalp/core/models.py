@@ -26,6 +26,10 @@ class FilterRule:
     impact: int
     tags: Set[str] = field(default_factory=set)
 
+    def __post_init__(self):
+        if not isinstance(self.impact, int):
+            object.__setattr__(self, "impact", int(self.impact or 0))
+
 
 @dataclass(slots=True)
 class AttackMatch:

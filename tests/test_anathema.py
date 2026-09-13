@@ -64,3 +64,16 @@ def test_anathema_benign_request_scores_zero():
     score = analyzer.score_entry(entry)
     assert score == 0
     assert analyzer.is_violator("10.0.0.1") is False
+
+def test_anathema_signatures_files_in_sync():
+    import json
+    from pathlib import Path
+
+    p1 = Path("scalp/heuristics/signatures.json")
+    p2 = Path("anathema/signature.json")
+    d1 = json.loads(p1.read_text(encoding="utf-8"))
+    d2 = json.loads(p2.read_text(encoding="utf-8"))
+
+    assert len(d1["signatures"]) == len(d2["signatures"])
+    assert [s["q"] for s in d1["signatures"]] == [s["q"] for s in d2["signatures"]]
+

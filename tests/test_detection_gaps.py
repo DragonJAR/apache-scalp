@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from scalp.core.engine import ScalpEngine
 from scalp.core.normalizer import PayloadNormalizer
-from scalp.core.parser import LogParser
 from scalp.core.rules import RuleLoader
 
 DEFAULT_FILTER_XML = Path(__file__).parent.parent / "default_filter.xml"

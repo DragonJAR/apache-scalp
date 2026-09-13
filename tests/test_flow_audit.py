@@ -1,6 +1,5 @@
 """Tests for flow-by-flow audit fixes: root scalp.py, calendar end-of-month, gzip streaming, comment filtering, and CDATA escaping."""
 import gzip
-from pathlib import Path
 import subprocess
 import sys
 from scalp.core.exclusions import DateRangeFilter

@@ -2,8 +2,6 @@
 Provides full backwards compatibility with classic flags while adding modern options.
 """
 import argparse
-from datetime import datetime
-import os
 from pathlib import Path
 import sys
 import time
@@ -134,8 +132,8 @@ def main(argv: list = None) -> int:
     # Load primary filters
     filter_path = Path(args.filters)
     if not filter_path.is_file():
-        # Fallback check relative to current dir or package dir
-        if DEFAULT_FILTER_XML.is_file():
+        # Only fall back to DEFAULT_FILTER_XML if default filter was used
+        if args.filters in ("default_filter.xml", str(DEFAULT_FILTER_XML)) and DEFAULT_FILTER_XML.is_file():
             filter_path = DEFAULT_FILTER_XML
         else:
             print(f"error: the filters file '{args.filters}' doesn't exist")
@@ -231,8 +229,8 @@ def main(argv: list = None) -> int:
     if args.save_unparsed and len(result.unmatched_lines) > 0:
         except_file = odir / "scalp_except.txt"
         with open(except_file, "w", encoding="utf-8") as ef:
-            for l in result.unmatched_lines:
-                ef.write(l + "\n")
+            for line_entry in result.unmatched_lines:
+                ef.write(line_entry + "\n")
         print(f"\tWritten {len(result.unmatched_lines)} unparsed lines to {except_file}")
 
     return 0

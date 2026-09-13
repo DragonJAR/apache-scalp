@@ -38,9 +38,7 @@ class AnathemaAnalyzer:
         """Evaluates a LogEntry and returns its heuristic threat score (0 to 10).
         If an IP is already banned, automatically assigns max threat score 10."""
         if entry.ip in self.banned_ips:
-            if entry.ip not in self.violators:
-                self.violators[entry.ip] = []
-            self.violators[entry.ip].append(entry)
+            self.violators.setdefault(entry.ip, []).append(entry)
             return 10
 
         highest_score = 0
@@ -51,10 +49,7 @@ class AnathemaAnalyzer:
                     highest_score = severity
 
         if highest_score > 0:
-            if entry.ip not in self.violators:
-                self.violators[entry.ip] = []
-            self.violators[entry.ip].append(entry)
-
+            self.violators.setdefault(entry.ip, []).append(entry)
             if highest_score >= 10:
                 self.banned_ips.add(entry.ip)
 

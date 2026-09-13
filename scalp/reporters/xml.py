@@ -1,4 +1,4 @@
-"""XML reporter for Scalp, compatible with Scalp DTD."""
+from collections import defaultdict
 import time
 from xml.sax.saxutils import escape
 from scalp.core.engine import ScanResult
@@ -19,15 +19,9 @@ class XmlReporter(BaseReporter):
         curtime = time.strftime("%a-%d-%b-%Y %H:%M:%S", time.localtime())
 
         # Group matches: tag -> impact -> list of matches
-        grouped = {}
+        grouped = defaultdict(lambda: defaultdict(list))
         for match in result.matches:
-            tag = match.tag
-            impact = match.rule.impact
-            if tag not in grouped:
-                grouped[tag] = {}
-            if impact not in grouped[tag]:
-                grouped[tag][impact] = []
-            grouped[tag][impact].append(match)
+            grouped[match.tag][match.rule.impact].append(match)
 
         lines = [
             XML_HEADER,

@@ -45,3 +45,9 @@ def test_attack_match_creation():
     match = AttackMatch(entry=entry, rule=rule, matched_string="/test", tag="xss")
     assert match.matched_string == "/test"
     assert match.rule.impact == 5
+
+def test_filter_rule_impact_coerced_from_str():
+    rule = FilterRule(rule_id="2", pattern="sqli", description="SQL Injection", impact="9")
+    assert rule.impact == 9
+    assert isinstance(rule.impact, int)
+

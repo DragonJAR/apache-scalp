@@ -14,7 +14,7 @@ pkg_root = Path(__file__).resolve().parent.parent
 if str(pkg_root) not in sys.path:
     sys.path.insert(0, str(pkg_root))
 
-from scalp.cli import main
+from scalp.cli import main  # noqa: E402
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

@@ -57,3 +57,12 @@ def test_network_filter_no_accidental_prefix_matches():
     assert net_filter.is_excluded("10.0.0.1") is True
     assert net_filter.is_excluded("10.0.0.10") is False
     assert net_filter.is_excluded("10.0.0.100") is False
+
+def test_network_and_date_filters_fast_path_when_empty():
+    net_filter = NetworkFilter()
+    assert net_filter.is_excluded("192.168.1.1") is False
+
+    date_filter = DateRangeFilter()
+    from datetime import datetime
+    assert date_filter.is_valid(datetime.now()) is True
+
