@@ -47,3 +47,7 @@ scalp_except.txt
 
 # Root-level loose logs
 /*.log
+
+# Internal generator scripts
+scripts/generate_enterprise_log.py
+
