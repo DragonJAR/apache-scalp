@@ -1,5 +1,5 @@
 """Modern, responsive, 100% self-contained (Zero-CDN) HTML5 reporter for Scalp."""
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 import html
 import json
@@ -362,6 +362,333 @@ html, body {
   transition: width 0.3s ease;
 }
 
+/* Breach / Exploitation Success Triage Panel */
+.breach-triage-panel {
+  background: rgba(244, 63, 94, 0.07);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.15);
+  position: relative;
+}
+
+.breach-triage-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--danger);
+}
+
+.breach-triage-clean {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  box-shadow: var(--shadow);
+}
+
+.breach-triage-clean::before {
+  background: var(--success);
+}
+
+.breach-triage-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.breach-triage-clean .breach-triage-header {
+  border-bottom: 1px solid var(--success-border);
+}
+
+.breach-triage-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.breach-triage-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.breach-triage-body {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.breach-triage-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.breach-triage-stat-val {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--danger);
+  line-height: 1.1;
+  font-feature-settings: "tnum";
+}
+
+.breach-triage-clean .breach-triage-stat-val {
+  color: var(--success);
+}
+
+.breach-triage-stat-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-main);
+}
+
+.breach-triage-stat-sub {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.breach-triage-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.btn-triage {
+  background: var(--danger);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 9px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 10px rgba(244, 63, 94, 0.4);
+}
+
+.btn-triage:hover {
+  background: #e11d48;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(244, 63, 94, 0.5);
+}
+
+.btn-triage.active {
+  background: #be123c;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Attack Activity Timeline */
+.timeline-panel {
+  position: relative;
+}
+
+.timeline-view-toggles {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.775rem;
+  border-radius: var(--radius-sm);
+}
+
+.timeline-view-toggles .btn.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  border-color: var(--accent);
+}
+
+.timeline-chart-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 8px 0 4px 0;
+  user-select: none;
+  overflow-x: auto;
+}
+
+.timeline-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  display: block;
+}
+
+.timeline-grid-line {
+  stroke: var(--border-light);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+}
+
+.timeline-axis-text {
+  fill: var(--text-dim);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.timeline-val-text {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.timeline-bar {
+  fill: var(--accent);
+  cursor: pointer;
+  transition: fill 0.15s ease, filter 0.15s ease;
+}
+
+.timeline-bar:hover {
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+}
+
+.timeline-bar.selected {
+  fill: var(--danger) !important;
+  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.8)) !important;
+}
+
+.timeline-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  background: rgba(13, 19, 33, 0.95);
+  border: 1px solid var(--border-focus);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  transition: opacity 0.1s ease;
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.timeline-tooltip-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.timeline-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 3px;
+  font-size: 0.775rem;
+}
+
+.timeline-tooltip-row span {
+  color: var(--text-muted);
+}
+
+.timeline-tooltip-row b, .timeline-tooltip-row code {
+  color: var(--text-main);
+  text-align: right;
+}
+
+.timeline-tooltip-hint {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Adversary Intelligence in Top Attackers */
+.actor-profile-row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.actor-profile-row:hover {
+  border-color: var(--border-light);
+  transform: translateX(2px);
+}
+
+.actor-ip-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actor-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.actor-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.actor-meta-item svg {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.actor-target {
+  flex: 1;
+  min-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actor-target .mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--purple);
+}
+
+.badge-subtle {
+  background: var(--bg-surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
 /* Interactive Explorer */
 .explorer-toolbar {
   display: flex;
@@ -428,6 +755,32 @@ html, body {
 
 .btn-clear-search:hover {
   color: var(--text-main);
+}
+
+.kbd-hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.search-input:focus ~ .kbd-hint,
+.search-input:not(:placeholder-shown) ~ .kbd-hint {
+  opacity: 0;
 }
 
 .filter-dropdowns {
@@ -543,9 +896,12 @@ html, body {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 72vh;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-card);
+  position: relative;
 }
 
 .matches-table {
@@ -562,6 +918,278 @@ html, body {
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.matches-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.matches-table thead th.sortable:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-main);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.sort-indicator::after {
+  content: '▲';
+}
+
+.matches-table thead th.sorted-asc .sort-indicator {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.matches-table thead th.sorted-asc .sort-indicator::after {
+  content: '▲';
+}
+
+.matches-table thead th.sorted-desc .sort-indicator {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.matches-table thead th.sorted-desc .sort-indicator::after {
+  content: '▼';
+}
+
+.matches-table thead th.sortable:hover .sort-indicator {
+  opacity: 0.75;
+  color: var(--text-main);
+}
+
+/* Column Resizer */
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 15;
+}
+
+.col-resizer::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  right: 2px;
+  width: 2px;
+  background-color: var(--border-light);
+  border-radius: 1px;
+  transition: background-color 0.15s ease;
+}
+
+.col-resizer:hover::after,
+.col-resizer.active::after {
+  background-color: var(--accent);
+}
+
+.col-resizer.active {
+  background-color: rgba(6, 182, 212, 0.15);
+}
+
+body.col-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+th.resizing {
+  border-right: 2px solid var(--accent);
+}
+
+/* Table Density Toggle & Modes */
+.btn-density-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.btn-density-toggle.active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.matches-table.density-compact thead th {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
+.matches-table.density-compact tbody td {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+}
+
+.matches-table.density-compact .badge {
+  padding: 1px 6px;
+  font-size: 0.72rem;
+}
+
+.matches-table.density-compact .cat-pill {
+  font-size: 0.78rem;
+}
+
+.matches-table.density-compact .rule-ref {
+  font-size: 0.7rem;
+  max-width: 180px;
+}
+
+.matches-table.density-compact .payload-snippet {
+  padding: 1px 4px;
+  font-size: 0.75rem;
+}
+
+.matches-table.density-compact .cell-time {
+  font-size: 0.75rem;
+}
+
+/* Active Filter Badges Bar */
+.active-filters-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+.active-filters-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.active-filters-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.active-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--text-main);
+}
+
+.btn-remove-pill {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-remove-pill:hover {
+  color: var(--danger);
+  background-color: var(--danger-bg);
+}
+
+.btn-clear-all-filters {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-clear-all-filters:hover {
+  color: #fff;
+  background: rgba(6, 182, 212, 0.15);
+  text-decoration: underline;
+}
+
+/* Click-to-filter on Table Entities */
+.filterable-ip {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.filterable-ip:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.filterable-status {
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.filterable-status:hover {
+  filter: brightness(1.25);
+  transform: translateY(-1px);
+}
+
+.filterable-cat {
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.filterable-cat:hover {
+  filter: brightness(1.25);
+  transform: translateY(-1px);
+}
+
+/* Visual Match Highlight */
+mark.hl-match {
+  background-color: rgba(244, 63, 94, 0.25);
+  color: #fb7185;
+  border-bottom: 2px solid var(--danger);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 700;
 }
 
 .matches-table tbody tr.match-row {
@@ -898,6 +1526,10 @@ JS_SCRIPT = r"""
   let currentPage = 1;
   let pageSize = 25;
   let openDetailId = null;
+  let currentSort = { column: 'id', order: 'asc' };
+  let isCompact = false;
+  let isExploit200Active = false;
+  let activeTimelineBucket = null;
 
   // DOM references
   const searchInput = document.getElementById('search-input');
@@ -918,6 +1550,12 @@ JS_SCRIPT = r"""
   const btnExportCsv = document.getElementById('btn-export-csv');
   const btnExportJson = document.getElementById('btn-export-json');
   const toastEl = document.getElementById('scalp-toast');
+  const btnDensityToggle = document.getElementById('btn-density-toggle');
+  const densityToggleText = document.getElementById('density-toggle-text');
+  const matchesTable = document.querySelector('.matches-table');
+  const activeFiltersBar = document.getElementById('active-filters-bar');
+  const activeFiltersList = document.getElementById('active-filters-list');
+  const btnTriage200 = document.getElementById('btn-triage-200');
 
   let toastTimer = null;
   function showToast(msg) {
@@ -938,6 +1576,22 @@ JS_SCRIPT = r"""
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  // Visual match highlighting inside target URL
+  function highlightMatch(target, match) {
+    if (!target) return '';
+    if (!match) return escapeHtml(target);
+    const targetLower = target.toLowerCase();
+    const matchLower = match.toLowerCase();
+    const idx = targetLower.indexOf(matchLower);
+    if (idx !== -1) {
+      const before = target.slice(0, idx);
+      const matched = target.slice(idx, idx + match.length);
+      const after = target.slice(idx + match.length);
+      return `${escapeHtml(before)}<mark class="hl-match">${escapeHtml(matched)}</mark>${escapeHtml(after)}`;
+    }
+    return escapeHtml(target);
   }
 
   function copyTextToClipboard(text, successMsg) {
@@ -970,7 +1624,152 @@ JS_SCRIPT = r"""
     document.body.removeChild(ta);
   }
 
-  // Filter application
+  // ---------------------------------------------------------------------------
+  // Sorting Engine (Type-aware, Stable)
+  // ---------------------------------------------------------------------------
+  function sortMatches(list) {
+    if (!currentSort.column) return list;
+    const col = currentSort.column;
+    const dir = currentSort.order === 'desc' ? -1 : 1;
+
+    list.sort((a, b) => {
+      let res = 0;
+      if (col === 'id') {
+        res = (a.id || 0) - (b.id || 0);
+      } else if (col === 'status') {
+        res = (Number(a.status) || 0) - (Number(b.status) || 0);
+      } else if (col === 'impact') {
+        res = (Number(a.impact) || 0) - (Number(b.impact) || 0);
+      } else if (col === 'time') {
+        const ta = a.time ? Date.parse(a.time.replace(' ', 'T')) || 0 : 0;
+        const tb = b.time ? Date.parse(b.time.replace(' ', 'T')) || 0 : 0;
+        res = ta - tb;
+      } else if (col === 'ip') {
+        res = String(a.ip || '').localeCompare(String(b.ip || ''), undefined, { numeric: true, sensitivity: 'base' });
+      } else if (col === 'cat') {
+        const ca = String(a.cat || a.tag || '');
+        const cb = String(b.cat || b.tag || '');
+        res = ca.localeCompare(cb);
+      } else if (col === 'target') {
+        res = String(a.target || '').localeCompare(String(b.target || ''));
+      } else if (col === 'match') {
+        res = String(a.match || '').localeCompare(String(b.match || ''));
+      }
+      if (res === 0) {
+        res = (a.id || 0) - (b.id || 0);
+      }
+      return res * dir;
+    });
+    return list;
+  }
+
+  function updateSortHeaders() {
+    const allTh = document.querySelectorAll('.matches-table thead th.sortable');
+    allTh.forEach(th => {
+      const col = th.dataset.sort;
+      th.classList.remove('sorted-asc', 'sorted-desc');
+      th.removeAttribute('aria-sort');
+      if (col === currentSort.column) {
+        th.classList.add(currentSort.order === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        th.setAttribute('aria-sort', currentSort.order === 'asc' ? 'ascending' : 'descending');
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Active Filter Badges
+  // ---------------------------------------------------------------------------
+  function updateTriageButton() {
+    if (!btnTriage200) return;
+    const count = (reportData.summary && reportData.summary.exploit_200_count) || 0;
+    if (isExploit200Active) {
+      btnTriage200.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Clear Exploit 200 Triage Filter';
+      btnTriage200.classList.add('active');
+    } else {
+      btnTriage200.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> Filter High-Severity HTTP 200 Exploits (' + Number(count).toLocaleString() + ')';
+      btnTriage200.classList.remove('active');
+    }
+  }
+
+  function updateActiveFilterBadges() {
+    if (!activeFiltersBar || !activeFiltersList) return;
+
+    const q = (searchInput?.value || '').trim();
+    const cat = filterCat?.value || 'all';
+    const sev = filterSev?.value || 'all';
+    const status = filterStatus?.value || 'all';
+    const vec = filterVector?.value || 'all';
+
+    const badges = [];
+
+    if (isExploit200Active) {
+      badges.push({
+        type: 'exploit200',
+        label: '🚨 Triage: High-Severity HTTP 200 Exploits',
+      });
+    }
+    if (activeTimelineBucket) {
+      badges.push({
+        type: 'timeline',
+        label: `📅 Time: ${escapeHtml(activeTimelineBucket.label)}`,
+      });
+    }
+    if (q) {
+      badges.push({
+        type: 'search',
+        label: `Search: "${escapeHtml(q)}"`,
+      });
+    }
+    if (cat !== 'all') {
+      const rawText = filterCat.options[filterCat.selectedIndex]?.text || cat;
+      const cleanText = rawText.replace(/\s*\(\d+[\d,]*\)$/, '');
+      badges.push({
+        type: 'category',
+        label: `Category: ${escapeHtml(cleanText)}`,
+      });
+    }
+    if (sev !== 'all') {
+      const rawText = filterSev.options[filterSev.selectedIndex]?.text || sev;
+      badges.push({
+        type: 'severity',
+        label: `Severity: ${escapeHtml(rawText)}`,
+      });
+    }
+    if (status !== 'all') {
+      const rawText = filterStatus.options[filterStatus.selectedIndex]?.text || status;
+      const cleanText = rawText.replace(/\s*\(\d+[\d,]*\)$/, '');
+      badges.push({
+        type: 'status',
+        label: `Status: ${escapeHtml(cleanText)}`,
+      });
+    }
+    if (vec !== 'all') {
+      const rawText = filterVector.options[filterVector.selectedIndex]?.text || vec;
+      const cleanText = rawText.replace(/\s*\(\d+[\d,]*\)$/, '');
+      badges.push({
+        type: 'vector',
+        label: `Vector: ${escapeHtml(cleanText)}`,
+      });
+    }
+
+    if (badges.length === 0) {
+      activeFiltersBar.style.display = 'none';
+      activeFiltersList.innerHTML = '';
+      return;
+    }
+
+    activeFiltersBar.style.display = 'flex';
+    activeFiltersList.innerHTML = badges.map(b => `
+      <span class="active-filter-pill" data-filter-type="${b.type}">
+        <span>${b.label}</span>
+        <button type="button" class="btn-remove-pill" data-remove-filter="${b.type}" title="Remove filter" aria-label="Remove filter">&times;</button>
+      </span>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Filter Application
+  // ---------------------------------------------------------------------------
   let searchDebounce = null;
   function applyFilters() {
     const q = (searchInput?.value || '').trim().toLowerCase();
@@ -984,6 +1783,8 @@ JS_SCRIPT = r"""
     }
 
     filteredMatches = allMatches.filter(m => {
+      if (isExploit200Active && !m.is_exploit_200) return false;
+      if (activeTimelineBucket && (!m.time || !m.time.startsWith(activeTimelineBucket.key))) return false;
       if (cat !== 'all' && m.tag !== cat && m.cat !== cat) return false;
       if (status !== 'all' && String(m.status) !== status) return false;
       if (vec !== 'all' && m.vector !== vec) return false;
@@ -1003,11 +1804,16 @@ JS_SCRIPT = r"""
       return true;
     });
 
+    sortMatches(filteredMatches);
     currentPage = 1;
     openDetailId = null;
     render();
+    updateActiveFilterBadges();
   }
 
+  // ---------------------------------------------------------------------------
+  // Table Rendering
+  // ---------------------------------------------------------------------------
   function render() {
     const total = filteredMatches.length;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -1050,6 +1856,7 @@ JS_SCRIPT = r"""
       const rowNum = startIdx + idx + 1;
       const sevBadgeClass = m.impact >= 7 ? 'badge-danger' : (m.impact >= 4 ? 'badge-warning' : 'badge-info');
       const statusBadgeClass = (m.status >= 200 && m.status < 300) || m.status === 500 ? 'badge-danger' : (m.status >= 300 && m.status < 400 ? 'badge-warning' : 'badge-info');
+      const targetHighlighted = highlightMatch(m.target, m.match);
 
       rows.push(`
         <tr class="match-row" data-id="${m.id}">
@@ -1057,7 +1864,7 @@ JS_SCRIPT = r"""
           <td class="cell-time">${escapeHtml(m.time || '-')}</td>
           <td>
             <div class="ip-wrapper">
-              <span class="mono">${escapeHtml(m.ip)}</span>
+              <span class="mono filterable-ip" data-filter-ip="${escapeHtml(m.ip)}" title="Click to filter by IP: ${escapeHtml(m.ip)}">${escapeHtml(m.ip)}</span>
               <button type="button" class="btn-copy" data-copy-action="ip" title="Copy IP" aria-label="Copy IP">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
@@ -1065,19 +1872,19 @@ JS_SCRIPT = r"""
           </td>
           <td>
             <span class="method-badge">${escapeHtml(m.method || '-')}</span>
-            <span class="badge ${statusBadgeClass}">${escapeHtml(String(m.status))}</span>
+            <span class="badge ${statusBadgeClass} filterable-status" data-filter-status="${escapeHtml(String(m.status))}" title="Click to filter by HTTP ${escapeHtml(String(m.status))}">${escapeHtml(String(m.status))}</span>
           </td>
           <td>
             <span class="badge ${sevBadgeClass}">Impact ${m.impact}</span>
           </td>
           <td>
-            <div class="cat-pill">${escapeHtml(m.cat || m.tag)}</div>
+            <div class="cat-pill filterable-cat" data-filter-cat="${escapeHtml(m.tag)}" title="Click to filter by category: ${escapeHtml(m.cat || m.tag)}">${escapeHtml(m.cat || m.tag)}</div>
             <div class="rule-ref" title="${escapeHtml(m.desc)}">[${escapeHtml(String(m.rule))}] ${escapeHtml(m.desc)}</div>
           </td>
           <td>
             <div class="target-wrapper">
               <span class="badge badge-vector">${escapeHtml(m.vector || 'url')}</span>
-              <span class="target-url mono" title="${escapeHtml(m.target)}">${escapeHtml(m.target)}</span>
+              <span class="target-url mono" title="${escapeHtml(m.target)}">${targetHighlighted}</span>
               <button type="button" class="btn-copy" data-copy-action="target" title="Copy Target" aria-label="Copy Target">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
@@ -1103,7 +1910,7 @@ JS_SCRIPT = r"""
                   <div class="detail-item">
                     <span class="detail-label">Full Target URL</span>
                     <div class="detail-box">
-                      <code>${escapeHtml(m.target)}</code>
+                      <code>${targetHighlighted}</code>
                       <button type="button" class="btn-copy" data-copy-action="target" title="Copy Target">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                       </button>
@@ -1146,7 +1953,231 @@ JS_SCRIPT = r"""
     tableBody.innerHTML = rows.join('');
   }
 
-  // Event handlers
+  // ---------------------------------------------------------------------------
+  // Pointer Events Column Resizer
+  // ---------------------------------------------------------------------------
+  function initColumnResizing() {
+    const table = document.querySelector('.matches-table');
+    if (!table) return;
+    const resizers = table.querySelectorAll('.col-resizer');
+
+    resizers.forEach(resizer => {
+      resizer.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const th = resizer.closest('th');
+        if (!th) return;
+
+        if (table.style.tableLayout !== 'fixed') {
+          const allTh = table.querySelectorAll('thead th');
+          allTh.forEach(h => {
+            h.style.width = `${h.getBoundingClientRect().width}px`;
+          });
+          table.style.tableLayout = 'fixed';
+        }
+
+        const startX = e.clientX;
+        const startWidth = th.getBoundingClientRect().width;
+        const minWidth = parseInt(th.dataset.minWidth, 10) || 50;
+
+        resizer.setPointerCapture(e.pointerId);
+        resizer.classList.add('active');
+        th.classList.add('resizing');
+        document.body.classList.add('col-resizing');
+
+        function onPointerMove(moveEvent) {
+          if (moveEvent.pointerId !== e.pointerId) return;
+          const deltaX = moveEvent.clientX - startX;
+          const newWidth = Math.max(minWidth, startWidth + deltaX);
+          th.style.width = `${newWidth}px`;
+        }
+
+        function onPointerUp(upEvent) {
+          if (upEvent.pointerId !== e.pointerId) return;
+          resizer.classList.remove('active');
+          th.classList.remove('resizing');
+          document.body.classList.remove('col-resizing');
+
+          try {
+            resizer.releasePointerCapture(upEvent.pointerId);
+          } catch (err) {}
+
+          resizer.removeEventListener('pointermove', onPointerMove);
+          resizer.removeEventListener('pointerup', onPointerUp);
+          resizer.removeEventListener('pointercancel', onPointerUp);
+        }
+
+        resizer.addEventListener('pointermove', onPointerMove);
+        resizer.addEventListener('pointerup', onPointerUp);
+        resizer.addEventListener('pointercancel', onPointerUp);
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Column Header Sorting Interaction
+  // ---------------------------------------------------------------------------
+  function initColumnSorting() {
+    const thead = document.querySelector('.matches-table thead');
+    if (!thead) return;
+
+    thead.addEventListener('click', (e) => {
+      if (e.target.closest('.col-resizer')) return;
+
+      const th = e.target.closest('th.sortable');
+      if (!th) return;
+
+      const col = th.dataset.sort;
+      if (!col) return;
+
+      if (currentSort.column === col) {
+        currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.column = col;
+        currentSort.order = (col === 'impact' || col === 'status') ? 'desc' : 'asc';
+      }
+
+      updateSortHeaders();
+      sortMatches(filteredMatches);
+      currentPage = 1;
+      render();
+    });
+
+    updateSortHeaders();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Table Density Toggle
+  // ---------------------------------------------------------------------------
+  function initDensityToggle() {
+    if (!btnDensityToggle || !matchesTable) return;
+
+    btnDensityToggle.addEventListener('click', () => {
+      isCompact = !isCompact;
+      if (isCompact) {
+        matchesTable.classList.add('density-compact');
+        if (densityToggleText) densityToggleText.textContent = 'Density: Compact';
+        btnDensityToggle.classList.add('active');
+        showToast('Switched to Compact table density');
+      } else {
+        matchesTable.classList.remove('density-compact');
+        if (densityToggleText) densityToggleText.textContent = 'Density: Comfortable';
+        btnDensityToggle.classList.remove('active');
+        showToast('Switched to Comfortable table density');
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Active Filter Badges Removal Delegation
+  // ---------------------------------------------------------------------------
+  function initActiveFilters() {
+    if (!activeFiltersBar) return;
+
+    activeFiltersBar.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.btn-remove-pill');
+      if (removeBtn) {
+        const ftype = removeBtn.dataset.removeFilter;
+        if (ftype === 'search' && searchInput) searchInput.value = '';
+        if (ftype === 'category' && filterCat) filterCat.value = 'all';
+        if (ftype === 'severity' && filterSev) filterSev.value = 'all';
+        if (ftype === 'status' && filterStatus) filterStatus.value = 'all';
+        if (ftype === 'vector' && filterVector) filterVector.value = 'all';
+        if (ftype === 'exploit200') {
+          isExploit200Active = false;
+          updateTriageButton();
+        }
+        if (ftype === 'timeline') {
+          activeTimelineBucket = null;
+          document.querySelectorAll('.timeline-bar.selected').forEach(b => b.classList.remove('selected'));
+        }
+        applyFilters();
+        return;
+      }
+
+      const clearAllBtn = e.target.closest('#btn-clear-all-filters');
+      if (clearAllBtn) {
+        if (searchInput) searchInput.value = '';
+        if (filterCat) filterCat.value = 'all';
+        if (filterSev) filterSev.value = 'all';
+        if (filterStatus) filterStatus.value = 'all';
+        if (filterVector) filterVector.value = 'all';
+        isExploit200Active = false;
+        activeTimelineBucket = null;
+        document.querySelectorAll('.timeline-bar.selected').forEach(b => b.classList.remove('selected'));
+        updateTriageButton();
+        applyFilters();
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Keyboard Shortcuts Navigation
+  // ---------------------------------------------------------------------------
+  function initKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName);
+
+      // '/' focuses search
+      if (e.key === '/' && !isInputFocused) {
+        e.preventDefault();
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      // 'Escape' clears search or closes expanded detail row
+      if (e.key === 'Escape') {
+        if (activeEl === searchInput) {
+          if (searchInput.value) {
+            searchInput.value = '';
+            applyFilters();
+          } else {
+            searchInput.blur();
+          }
+          return;
+        }
+        if (openDetailId !== null) {
+          openDetailId = null;
+          render();
+          return;
+        }
+        if (searchInput && searchInput.value) {
+          searchInput.value = '';
+          applyFilters();
+          return;
+        }
+      }
+
+      // '[' and ']' or Left/Right arrows page back and forward
+      if (!isInputFocused) {
+        const total = filteredMatches.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+        if (e.key === '[' || e.key === 'ArrowLeft') {
+          if (currentPage > 1) {
+            e.preventDefault();
+            currentPage--;
+            render();
+          }
+        } else if (e.key === ']' || e.key === 'ArrowRight') {
+          if (currentPage < totalPages) {
+            e.preventDefault();
+            currentPage++;
+            render();
+          }
+        }
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Event Handlers & Delegation
+  // ---------------------------------------------------------------------------
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       clearTimeout(searchDebounce);
@@ -1172,6 +2203,10 @@ JS_SCRIPT = r"""
       if (filterSev) filterSev.value = 'all';
       if (filterStatus) filterStatus.value = 'all';
       if (filterVector) filterVector.value = 'all';
+      isExploit200Active = false;
+      activeTimelineBucket = null;
+      document.querySelectorAll('.timeline-bar.selected').forEach(b => b.classList.remove('selected'));
+      updateTriageButton();
       applyFilters();
     });
   }
@@ -1189,12 +2224,11 @@ JS_SCRIPT = r"""
   if (btnNext) btnNext.addEventListener('click', () => { currentPage++; render(); });
   if (btnLast) btnLast.addEventListener('click', () => { currentPage = Math.ceil(filteredMatches.length / pageSize); render(); });
 
-  // Table click delegation (Copy buttons & Row expansion)
+  // Table click delegation (Copy buttons, Filter clicks & Row expansion)
   if (tableBody) {
     tableBody.addEventListener('click', (e) => {
+      // 1. Copy buttons
       const copyBtn = e.target.closest('.btn-copy');
-      const row = e.target.closest('tr.match-row');
-
       if (copyBtn) {
         e.stopPropagation();
         const tr = copyBtn.closest('tr');
@@ -1210,6 +2244,57 @@ JS_SCRIPT = r"""
         return;
       }
 
+      // 2. Click-to-filter on IP
+      const filterIpEl = e.target.closest('.filterable-ip');
+      if (filterIpEl) {
+        e.stopPropagation();
+        const ip = filterIpEl.dataset.filterIp;
+        if (ip && searchInput) {
+          searchInput.value = ip;
+          applyFilters();
+          showToast(`Filtered by IP: ${ip}`);
+        }
+        return;
+      }
+
+      // 3. Click-to-filter on Category
+      const filterCatEl = e.target.closest('.filterable-cat');
+      if (filterCatEl) {
+        e.stopPropagation();
+        const cat = filterCatEl.dataset.filterCat;
+        if (cat && filterCat) {
+          const opt = Array.from(filterCat.options).find(o => o.value === cat);
+          if (opt) {
+            filterCat.value = cat;
+          } else if (searchInput) {
+            searchInput.value = cat;
+          }
+          applyFilters();
+          showToast(`Filtered by Category: ${cat}`);
+        }
+        return;
+      }
+
+      // 4. Click-to-filter on Status
+      const filterStatusEl = e.target.closest('.filterable-status');
+      if (filterStatusEl) {
+        e.stopPropagation();
+        const st = filterStatusEl.dataset.filterStatus;
+        if (st && filterStatus) {
+          const opt = Array.from(filterStatus.options).find(o => o.value === st);
+          if (opt) {
+            filterStatus.value = st;
+          } else if (searchInput) {
+            searchInput.value = st;
+          }
+          applyFilters();
+          showToast(`Filtered by HTTP ${st}`);
+        }
+        return;
+      }
+
+      // 5. Row expansion
+      const row = e.target.closest('tr.match-row');
       if (row) {
         const id = parseInt(row.dataset.id, 10);
         openDetailId = (openDetailId === id) ? null : id;
@@ -1284,7 +2369,71 @@ JS_SCRIPT = r"""
     });
   }
 
-  // Global utilities attached for Anathema copy toolbar
+  // ---------------------------------------------------------------------------
+  // Timeline Hover Tooltip & Click-to-filter
+  // ---------------------------------------------------------------------------
+  function initTimelineInteractions() {
+    const tooltip = document.getElementById('timeline-tooltip');
+    const chartWrapper = document.querySelector('.timeline-chart-wrapper');
+    if (!chartWrapper || !tooltip) return;
+
+    chartWrapper.addEventListener('mousemove', (e) => {
+      const bar = e.target.closest('.timeline-bar');
+      if (!bar) {
+        tooltip.style.opacity = '0';
+        return;
+      }
+      const label = bar.dataset.label || '';
+      const count = bar.dataset.count || '0';
+      const pct = bar.dataset.pct || '';
+      const cat = bar.dataset.cat || '';
+      const ip = bar.dataset.ip || '';
+
+      tooltip.innerHTML = `
+        <div class="timeline-tooltip-title">📅 ${escapeHtml(label)}</div>
+        <div class="timeline-tooltip-row"><span>Attacks:</span> <b>${escapeHtml(count)}</b> ${pct ? '(' + escapeHtml(pct) + ')' : ''}</div>
+        <div class="timeline-tooltip-row"><span>Top Category:</span> <b>${escapeHtml(cat)}</b></div>
+        <div class="timeline-tooltip-row"><span>Peak Adversary:</span> <code>${escapeHtml(ip)}</code></div>
+        <div class="timeline-tooltip-hint">👆 Click bar to filter table to this time slice</div>
+      `;
+
+      const wrapperRect = chartWrapper.getBoundingClientRect();
+      const x = e.clientX - wrapperRect.left + 15;
+      const y = e.clientY - wrapperRect.top - 10;
+      tooltip.style.left = `${Math.max(10, Math.min(x, wrapperRect.width - 260))}px`;
+      tooltip.style.top = `${Math.max(10, y)}px`;
+      tooltip.style.opacity = '1';
+    });
+
+    chartWrapper.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = '0';
+    });
+
+    chartWrapper.addEventListener('click', (e) => {
+      const bar = e.target.closest('.timeline-bar');
+      if (!bar) return;
+      const key = bar.dataset.bucketKey;
+      const label = bar.dataset.label || key;
+      if (!key) return;
+
+      if (activeTimelineBucket && activeTimelineBucket.key === key) {
+        activeTimelineBucket = null;
+        document.querySelectorAll('.timeline-bar.selected').forEach(b => b.classList.remove('selected'));
+        applyFilters();
+        showToast('Cleared timeline filter');
+      } else {
+        activeTimelineBucket = { key: key, label: label };
+        document.querySelectorAll('.timeline-bar.selected').forEach(b => b.classList.remove('selected'));
+        document.querySelectorAll(`.timeline-bar[data-bucket-key="${key}"]`).forEach(b => b.classList.add('selected'));
+        applyFilters();
+        showToast(`Filtered to ${label}`);
+        const exp = document.getElementById('interactive-explorer');
+        if (exp) exp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  // Global utilities attached for UI interactions
   window.ScalpReport = {
     copyBannedIps: function(format) {
       const ips = reportData.banned_ips || [];
@@ -1306,10 +2455,49 @@ JS_SCRIPT = r"""
     },
     copySingleIp: function(ip) {
       copyTextToClipboard(ip, `Copied IP: ${ip}`);
+    },
+    filterExploit200: function() {
+      isExploit200Active = !isExploit200Active;
+      updateTriageButton();
+      applyFilters();
+      if (isExploit200Active) {
+        showToast('Filtered to High-Severity HTTP 200 Exploits');
+        const exp = document.getElementById('interactive-explorer');
+        if (exp) exp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        showToast('Cleared Exploit 200 triage filter');
+      }
+    },
+    switchTimelineView: function(view) {
+      const dailySvg = document.getElementById('timeline-svg-daily');
+      const hourlySvg = document.getElementById('timeline-svg-hourly');
+      const btnDaily = document.getElementById('btn-timeline-daily');
+      const btnHourly = document.getElementById('btn-timeline-hourly');
+
+      if (view === 'daily') {
+        if (dailySvg) dailySvg.style.display = 'block';
+        if (hourlySvg) hourlySvg.style.display = 'none';
+        if (btnDaily) btnDaily.classList.add('active');
+        if (btnHourly) btnHourly.classList.remove('active');
+        showToast('Switched to Daily Timeline view');
+      } else {
+        if (dailySvg) dailySvg.style.display = 'none';
+        if (hourlySvg) hourlySvg.style.display = 'block';
+        if (btnDaily) btnDaily.classList.remove('active');
+        if (btnHourly) btnHourly.classList.add('active');
+        showToast('Switched to Hourly Timeline breakdown');
+      }
     }
   };
 
-  // Initial render
+  // Initialization
+  initColumnResizing();
+  initColumnSorting();
+  initDensityToggle();
+  initActiveFilters();
+  initKeyboardShortcuts();
+  initTimelineInteractions();
+  sortMatches(filteredMatches);
   render();
 })();
 """
@@ -1389,6 +2577,7 @@ class HtmlReporter(BaseReporter):
                 "ua": m.entry.user_agent or "",
                 "ref": m.entry.referrer or "",
                 "raw": m.entry.raw_line,
+                "is_exploit_200": bool(m.entry.status_code == 200 and int(m.rule.impact or 0) >= 7),
             })
 
         json_payload = {
@@ -1424,6 +2613,9 @@ class HtmlReporter(BaseReporter):
             has_anathema=has_anathema,
             banned_count=len(banned_ips),
         )
+
+        breach_triage_html = cls._build_breach_triage_panel(result.matches)
+        timeline_section_html = cls._build_timeline_section(result.matches)
 
         anathema_section_html = cls._build_anathema_section(
             has_anathema=has_anathema,
@@ -1482,6 +2674,8 @@ class HtmlReporter(BaseReporter):
             f'      <div>{status_badge_html}</div>',
             '    </header>',
             kpi_cards_html,
+            breach_triage_html,
+            timeline_section_html,
             anathema_section_html,
             top_stats_html,
             cls._build_explorer_markup(filter_options_html, total_matches, initial_rows_html),
@@ -1515,7 +2709,16 @@ class HtmlReporter(BaseReporter):
     ) -> str:
         ratio_class = "card-danger" if threat_ratio >= 10.0 else ("card-warning" if threat_ratio >= 1.0 else "card-success")
         rate = (processed_lines / elapsed_seconds) if elapsed_seconds > 0 else 0
-        total_sub = f"of {total_lines:,} total log records" if total_lines > 0 else "complete scan"
+        if total_lines > 0:
+            if processed_lines == total_lines:
+                total_sub = f"100% of {total_lines:,} total log records"
+            elif processed_lines < total_lines:
+                sample_rate = (processed_lines / total_lines) * 100.0
+                total_sub = f"Sampled: {sample_rate:.1f}% ({processed_lines:,} of {total_lines:,} records)"
+            else:
+                total_sub = f"of {total_lines:,} total log records"
+        else:
+            total_sub = "Complete scan"
 
         anathema_val = f"{banned_count:,}" if has_anathema else "N/A"
         anathema_sub = (
@@ -1554,6 +2757,270 @@ class HtmlReporter(BaseReporter):
       </div>
     </div>
 """
+
+    @classmethod
+    def _build_breach_triage_panel(cls, matches: List[Any]) -> str:
+        exploit_matches = [
+            m for m in matches
+            if m.entry.status_code == 200 and int(m.rule.impact or 0) >= 7
+        ]
+        exploit_count = len(exploit_matches)
+
+        if exploit_count == 0:
+            return """
+    <div class="breach-triage-panel breach-triage-clean">
+      <div class="breach-triage-header">
+        <div class="breach-triage-title-group">
+          <h3 class="breach-triage-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Exploitation Outcome Triage — No High-Severity HTTP 200 Responses
+          </h3>
+          <span class="badge badge-success">Clean Outcome</span>
+        </div>
+      </div>
+      <div class="breach-triage-body">
+        <div class="breach-triage-stat">
+          <div class="breach-triage-stat-val">0</div>
+          <div class="breach-triage-stat-label">HTTP 200 Exploitation Events</div>
+          <div class="breach-triage-stat-sub">No high-severity attacks (impact &ge; 7) returned HTTP 200 OK. All attacks were blocked or failed.</div>
+        </div>
+      </div>
+    </div>
+"""
+
+        target_count = len(set(m.entry.url for m in exploit_matches))
+        actor_count = len(set(m.entry.ip for m in exploit_matches))
+        top_cats = Counter(m.tag for m in exploit_matches).most_common(5)
+
+        tag_badges = "".join(
+            f'<span class="badge badge-danger">{html.escape(ATTACK_NAMES.get(tag.lower(), tag.upper()))}: {count:,}</span>'
+            for tag, count in top_cats
+        )
+
+        return f"""
+    <div class="breach-triage-panel">
+      <div class="breach-triage-header">
+        <div class="breach-triage-title-group">
+          <h3 class="breach-triage-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Exploitation Outcome Triage — High Risk HTTP 200 Responses
+          </h3>
+          <span class="badge badge-danger">High Breach Risk ({exploit_count:,} events)</span>
+        </div>
+        <div class="breach-triage-actions">
+          <button type="button" id="btn-triage-200" class="btn-triage" data-count="{exploit_count}" onclick="ScalpReport.filterExploit200()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            Filter High-Severity HTTP 200 Exploits ({exploit_count:,})
+          </button>
+        </div>
+      </div>
+      <div class="breach-triage-body">
+        <div class="breach-triage-stat">
+          <div class="breach-triage-stat-val">{exploit_count:,}</div>
+          <div class="breach-triage-stat-label">HTTP 200 Exploitation Events</div>
+          <div class="breach-triage-stat-sub">High-severity rules (impact &ge; 7) returning 200 OK — priority forensic review</div>
+        </div>
+        <div class="breach-triage-stat">
+          <div class="breach-triage-stat-val" style="color: var(--warning);">{target_count:,}</div>
+          <div class="breach-triage-stat-label">Target Endpoints</div>
+          <div class="breach-triage-stat-sub">Distinct vulnerable application URLs receiving HTTP 200 responses</div>
+        </div>
+        <div class="breach-triage-stat">
+          <div class="breach-triage-stat-val" style="color: var(--purple);">{actor_count:,}</div>
+          <div class="breach-triage-stat-label">Adversary Sources</div>
+          <div class="breach-triage-stat-sub">Distinct client IPs executing successful exploit attempts</div>
+        </div>
+        <div class="breach-triage-stat">
+          <div class="breach-triage-stat-label">Critical Attack Vectors</div>
+          <div class="breach-triage-tags">
+            {tag_badges}
+          </div>
+          <div class="breach-triage-stat-sub" style="margin-top: 6px;">Top attack classes yielding HTTP 200 responses</div>
+        </div>
+      </div>
+    </div>
+"""
+
+    @classmethod
+    def _build_timeline_section(cls, matches: List[Any]) -> str:
+        day_buckets_dict: Dict[str, List[Any]] = defaultdict(list)
+        hour_buckets_dict: Dict[str, List[Any]] = defaultdict(list)
+
+        for m in matches:
+            if not m.entry.timestamp:
+                continue
+            day_key = m.entry.timestamp.strftime("%Y-%m-%d")
+            hour_key = m.entry.timestamp.strftime("%Y-%m-%d %H")
+            day_buckets_dict[day_key].append(m)
+            hour_buckets_dict[hour_key].append(m)
+
+        if not day_buckets_dict:
+            return """
+    <div class="section-card timeline-panel">
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Attack Activity Timeline &amp; Campaign Distribution
+        </h2>
+      </div>
+      <div style="padding: 24px; text-align: center; color: var(--text-dim);">
+        No timestamp metadata found in analyzed log records to construct temporal distribution.
+      </div>
+    </div>
+"""
+
+        total_matches = len(matches)
+
+        # Prepare daily buckets
+        daily_buckets = []
+        for d_key in sorted(day_buckets_dict.keys()):
+            d_matches = day_buckets_dict[d_key]
+            d_count = len(d_matches)
+            top_cat_tag = Counter(m.tag for m in d_matches).most_common(1)[0][0]
+            top_cat_name = ATTACK_NAMES.get(top_cat_tag.lower(), top_cat_tag.upper())
+            peak_ip = Counter(m.entry.ip for m in d_matches).most_common(1)[0][0]
+            first_dt = d_matches[0].entry.timestamp
+            daily_buckets.append({
+                "key": d_key,
+                "label": first_dt.strftime("%d/%b (%a)") if first_dt else d_key,
+                "count": d_count,
+                "pct": (d_count / total_matches * 100.0) if total_matches > 0 else 0.0,
+                "cat": top_cat_name,
+                "ip": peak_ip,
+            })
+
+        # Prepare hourly buckets
+        hourly_buckets = []
+        for h_key in sorted(hour_buckets_dict.keys()):
+            h_matches = hour_buckets_dict[h_key]
+            h_count = len(h_matches)
+            top_cat_tag = Counter(m.tag for m in h_matches).most_common(1)[0][0]
+            top_cat_name = ATTACK_NAMES.get(top_cat_tag.lower(), top_cat_tag.upper())
+            peak_ip = Counter(m.entry.ip for m in h_matches).most_common(1)[0][0]
+            first_dt = h_matches[0].entry.timestamp
+            hourly_buckets.append({
+                "key": h_key,
+                "label": first_dt.strftime("%d/%b %H:00") if first_dt else h_key,
+                "count": h_count,
+                "pct": (h_count / total_matches * 100.0) if total_matches > 0 else 0.0,
+                "cat": top_cat_name,
+                "ip": peak_ip,
+            })
+
+        daily_svg = cls._render_timeline_svg(daily_buckets, svg_id="timeline-svg-daily", is_hourly=False)
+        hourly_svg = cls._render_timeline_svg(hourly_buckets, svg_id="timeline-svg-hourly", is_hourly=True)
+
+        return f"""
+    <div class="section-card timeline-panel">
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Attack Activity Timeline &amp; Campaign Distribution
+        </h2>
+        <div class="timeline-view-toggles">
+          <button type="button" id="btn-timeline-daily" class="btn btn-sm btn-secondary active" onclick="ScalpReport.switchTimelineView('daily')">Daily View ({len(daily_buckets)}d)</button>
+          <button type="button" id="btn-timeline-hourly" class="btn btn-sm btn-secondary" onclick="ScalpReport.switchTimelineView('hourly')">Hourly Breakdown ({len(hourly_buckets)}h)</button>
+        </div>
+      </div>
+      <div class="timeline-chart-wrapper">
+        <div id="timeline-tooltip" class="timeline-tooltip"></div>
+        {daily_svg}
+        {hourly_svg}
+      </div>
+    </div>
+"""
+
+    @classmethod
+    def _render_timeline_svg(cls, buckets: List[Dict[str, Any]], svg_id: str, is_hourly: bool = False) -> str:
+        n_buckets = len(buckets)
+        if n_buckets == 0:
+            return ""
+
+        max_count = max(b["count"] for b in buckets)
+        max_count_safe = max(1, max_count)
+
+        if is_hourly:
+            bar_w = 12.0
+            gap = 4.0
+            col_w = bar_w + gap
+            padding_left = 65.0
+            padding_right = 35.0
+            svg_width = max(960.0, padding_left + padding_right + (n_buckets * col_w))
+            svg_style = f"display: none; min-width: {int(svg_width)}px;" if svg_width > 960 else "display: none; width: 100%;"
+        else:
+            svg_width = 960.0
+            padding_left = 65.0
+            padding_right = 35.0
+            chart_w = svg_width - padding_left - padding_right
+            col_w = chart_w / max(1, n_buckets)
+            bar_w = max(16.0, min(64.0, col_w * 0.65))
+            svg_style = "display: block; width: 100%;"
+
+        svg_height = 220.0
+        padding_top = 28.0
+        padding_bottom = 44.0
+        chart_h = svg_height - padding_top - padding_bottom
+
+        # Grid lines and Y-axis labels
+        grid_lines = []
+        for frac in [1.0, 0.75, 0.5, 0.25, 0.0]:
+            y = padding_top + chart_h - (frac * chart_h)
+            val = int(round(frac * max_count_safe))
+            grid_lines.append(
+                f'<line class="timeline-grid-line" x1="{padding_left}" y1="{y:.1f}" x2="{svg_width - padding_right}" y2="{y:.1f}"/>\n'
+                f'        <text class="timeline-axis-text" x="{padding_left - 8}" y="{y + 4:.1f}" text-anchor="end">{val:,}</text>'
+            )
+        grid_markup = "\n        ".join(grid_lines)
+
+        # Bars and axis labels
+        bars_markup = []
+        for idx, b in enumerate(buckets):
+            count = b["count"]
+            bar_h = (count / max_count_safe) * chart_h if max_count_safe > 0 else 0.0
+            bar_h = max(2.0, bar_h) if count > 0 else 0.0
+
+            if is_hourly:
+                x = padding_left + (idx * col_w)
+            else:
+                x = padding_left + (idx * col_w) + (col_w - bar_w) / 2.0
+
+            y = padding_top + (chart_h - bar_h)
+            cx = x + (bar_w / 2.0)
+
+            # Value text above bar
+            show_val = (not is_hourly) or (count == max_count) or (n_buckets <= 36)
+            val_text = f'<text class="timeline-val-text" x="{cx:.1f}" y="{max(12.0, y - 5.0):.1f}">{count:,}</text>' if show_val else ""
+
+            # X-axis label below bar
+            show_axis = True
+            if is_hourly and n_buckets > 24:
+                label_str = b["label"]
+                show_axis = (idx % 6 == 0) or ("00:00" in label_str) or ("12:00" in label_str)
+
+            axis_text = f'<text class="timeline-axis-text" x="{cx:.1f}" y="{padding_top + chart_h + 18:.1f}" text-anchor="middle">{html.escape(b["label"])}</text>' if show_axis else ""
+
+            bars_markup.append(f"""        <g>
+          {val_text}
+          <rect class="timeline-bar"
+                x="{x:.1f}" y="{y:.1f}"
+                width="{bar_w:.1f}" height="{bar_h:.1f}"
+                rx="3"
+                data-bucket-key="{html.escape(b['key'])}"
+                data-label="{html.escape(b['label'])}"
+                data-count="{b['count']:,}"
+                data-pct="{b['pct']:.1f}%"
+                data-cat="{html.escape(b['cat'])}"
+                data-ip="{html.escape(b['ip'])}"/>
+          {axis_text}
+        </g>""")
+
+        bars_html = "\n".join(bars_markup)
+
+        return f"""
+      <svg id="{svg_id}" class="timeline-svg" viewBox="0 0 {int(svg_width)} {int(svg_height)}" style="{svg_style}">
+        {grid_markup}
+{bars_html}
+      </svg>"""
 
     @classmethod
     def _build_anathema_section(
@@ -1874,6 +3341,21 @@ class HtmlReporter(BaseReporter):
         }
 
     @classmethod
+    def _highlight_match(cls, target: str, match: str) -> str:
+        """Safely highlights the matched exploit substring in the target URL."""
+        if not target:
+            return ""
+        if not match:
+            return html.escape(target)
+        idx = target.lower().find(match.lower())
+        if idx != -1:
+            before = html.escape(target[:idx])
+            matched_part = html.escape(target[idx:idx + len(match)])
+            after = html.escape(target[idx + len(match):])
+            return f'{before}<mark class="hl-match">{matched_part}</mark>{after}'
+        return html.escape(target)
+
+    @classmethod
     def _build_initial_rows_fallback(cls, sample_matches: List[Any]) -> str:
         """Generates fallback rows for noscript environments."""
         if not sample_matches:
@@ -1881,20 +3363,25 @@ class HtmlReporter(BaseReporter):
 
         rows = []
         for idx, m in enumerate(sample_matches, 1):
-            sev_badge = "badge-danger" if m.rule.impact >= 7 else ("badge-warning" if m.rule.impact >= 4 else "badge-info")
+            impact_val = int(m.rule.impact or 0)
+            sev_badge = "badge-danger" if impact_val >= 7 else ("badge-warning" if impact_val >= 4 else "badge-info")
             cat_name = ATTACK_NAMES.get(m.tag.lower(), m.tag.upper())
+            status_code = int(m.entry.status_code or 0)
+            status_class = "badge-danger" if ((status_code >= 200 and status_code < 300) or status_code == 500) else ("badge-warning" if (status_code >= 300 and status_code < 400) else "badge-info")
+            target_hl = cls._highlight_match(m.entry.url, m.matched_string)
+
             rows.append(f"""
           <tr class="match-row" data-id="{idx}">
             <td class="cell-num">{idx}</td>
             <td class="cell-time">{html.escape(m.entry.timestamp.strftime("%Y-%m-%d %H:%M:%S") if m.entry.timestamp else "-")}</td>
-            <td><span class="mono">{html.escape(m.entry.ip)}</span></td>
-            <td><span class="method-badge">{html.escape(m.entry.method)}</span> <span class="badge badge-info">{m.entry.status_code}</span></td>
+            <td><span class="mono filterable-ip" data-filter-ip="{html.escape(m.entry.ip)}" title="Click to filter by IP: {html.escape(m.entry.ip)}">{html.escape(m.entry.ip)}</span></td>
+            <td><span class="method-badge">{html.escape(m.entry.method)}</span> <span class="badge {status_class} filterable-status" data-filter-status="{status_code}" title="Click to filter by HTTP {status_code}">{status_code}</span></td>
             <td><span class="badge {sev_badge}">Impact {m.rule.impact}</span></td>
             <td>
-              <div class="cat-pill">{html.escape(cat_name)}</div>
-              <div class="rule-ref">[{html.escape(m.rule.rule_id)}] {html.escape(m.rule.description)}</div>
+              <div class="cat-pill filterable-cat" data-filter-cat="{html.escape(m.tag)}" title="Click to filter by category: {html.escape(cat_name)}">{html.escape(cat_name)}</div>
+              <div class="rule-ref" title="{html.escape(m.rule.description)}">[{html.escape(m.rule.rule_id)}] {html.escape(m.rule.description)}</div>
             </td>
-            <td><span class="mono">{html.escape(m.entry.url)}</span></td>
+            <td><span class="target-url mono" title="{html.escape(m.entry.url)}">{target_hl}</span></td>
             <td><code class="payload-snippet">{html.escape(m.matched_string)}</code></td>
           </tr>
 """)
@@ -1914,7 +3401,11 @@ class HtmlReporter(BaseReporter):
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Interactive Attack Explorer
         </h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" id="btn-density-toggle" class="btn btn-secondary btn-density-toggle" title="Toggle table row density (Comfortable / Compact)" aria-label="Toggle density">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span id="density-toggle-text">Density: Comfortable</span>
+          </button>
           <button type="button" id="btn-export-csv" class="btn btn-secondary">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
@@ -1930,7 +3421,8 @@ class HtmlReporter(BaseReporter):
           <div class="search-and-actions">
             <div class="search-box-wrapper">
               <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="search-input" class="search-input" placeholder="Real-time search IP, URL, Rule ID, payload, User-Agent..." autocomplete="off">
+              <input type="text" id="search-input" class="search-input" placeholder="Real-time search IP, URL, Rule ID, payload, User-Agent... (Press / to focus)" autocomplete="off">
+              <span class="kbd-hint" title="Press / to focus search">/</span>
               <button type="button" id="btn-clear-search" class="btn-clear-search" title="Clear search">&times;</button>
             </div>
             <span id="records-count" class="badge badge-info">Total Attacks: {total_matches:,}</span>
@@ -1974,18 +3466,72 @@ class HtmlReporter(BaseReporter):
           </div>
         </div>
 
+        <div id="active-filters-bar" class="active-filters-bar" style="display: none;">
+          <span class="active-filters-label">Active Filters:</span>
+          <div id="active-filters-list" class="active-filters-list"></div>
+          <button type="button" id="btn-clear-all-filters" class="btn-clear-all-filters">Clear all</button>
+        </div>
+
         <div class="table-responsive">
           <table class="matches-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Timestamp</th>
-                <th>Client IP</th>
-                <th>Method / Status</th>
-                <th>Impact</th>
-                <th>Category &amp; Rule</th>
-                <th>Vector &amp; Target</th>
-                <th>Matched Payload</th>
+                <th class="sortable" data-sort="id" data-min-width="50" title="Sort by ID">
+                  <div class="th-content">
+                    <span>#</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="time" data-min-width="130" title="Sort by Timestamp">
+                  <div class="th-content">
+                    <span>Timestamp</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="ip" data-min-width="120" title="Sort by Client IP">
+                  <div class="th-content">
+                    <span>Client IP</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="status" data-min-width="110" title="Sort by Status Code">
+                  <div class="th-content">
+                    <span>Method / Status</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="impact" data-min-width="85" title="Sort by Severity Impact">
+                  <div class="th-content">
+                    <span>Impact</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="cat" data-min-width="140" title="Sort by Category">
+                  <div class="th-content">
+                    <span>Category &amp; Rule</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="target" data-min-width="160" title="Sort by Target URL">
+                  <div class="th-content">
+                    <span>Vector &amp; Target</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
+                <th class="sortable" data-sort="match" data-min-width="140" title="Sort by Matched Payload">
+                  <div class="th-content">
+                    <span>Matched Payload</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </div>
+                  <span class="col-resizer"></span>
+                </th>
               </tr>
             </thead>
             <tbody id="matches-tbody">
@@ -2006,9 +3552,9 @@ class HtmlReporter(BaseReporter):
 
           <div class="pagination-controls">
             <button type="button" id="btn-first" class="btn-page" title="First Page">&laquo;</button>
-            <button type="button" id="btn-prev" class="btn-page" title="Previous Page">&lsaquo;</button>
+            <button type="button" id="btn-prev" class="btn-page" title="Previous Page (or press [ / &larr;)">&lsaquo;</button>
             <span id="page-indicator" class="page-indicator">Page 1 of 1</span>
-            <button type="button" id="btn-next" class="btn-page" title="Next Page">&rsaquo;</button>
+            <button type="button" id="btn-next" class="btn-page" title="Next Page (or press ] / &rarr;)">&rsaquo;</button>
             <button type="button" id="btn-last" class="btn-page" title="Last Page">&raquo;</button>
           </div>
         </div>

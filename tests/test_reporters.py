@@ -237,3 +237,154 @@ def test_json_reporter_valid_json(tmp_path):
     assert len(data["matches"]) == 1
     assert data["matches"][0]["impact"] == 8
     assert data["matches"][0]["ip"] == "192.168.1.100"
+
+
+def test_html_reporter_interactive_ux_features(tmp_path):
+    result = make_sample_result()
+    out_file = tmp_path / "report_interactive.html"
+    HtmlReporter.generate(result, str(out_file), source_name="access.log")
+
+    assert out_file.exists()
+    content = out_file.read_text(encoding="utf-8")
+
+    # 1. Manual Column Resizing markup & logic
+    assert '<span class="col-resizer"></span>' in content
+    assert 'data-min-width="50"' in content
+    assert "setPointerCapture" in content
+    assert "col-resizing" in content
+    assert "col-resize" in content
+
+    # 2. Column Sorting markup & logic
+    assert 'class="sortable" data-sort="id"' in content
+    assert 'data-sort="time"' in content
+    assert 'data-sort="ip"' in content
+    assert 'data-sort="status"' in content
+    assert 'data-sort="impact"' in content
+    assert 'data-sort="cat"' in content
+    assert 'data-sort="target"' in content
+    assert 'data-sort="match"' in content
+    assert 'sort-indicator' in content
+    assert 'localeCompare' in content
+
+    # 3. Click-to-filter markup & logic
+    assert 'filterable-ip' in content
+    assert 'data-filter-ip="192.168.1.100"' in content
+    assert 'filterable-status' in content
+    assert 'data-filter-status="200"' in content
+    assert 'filterable-cat' in content
+    assert 'data-filter-cat="xss"' in content
+
+    # 4. Visual match highlight
+    assert '<mark class="hl-match">&lt;script&gt;</mark>' in content
+
+    # 5. Sticky header CSS
+    assert "position: sticky" in content
+    assert "top: 0" in content
+    assert "z-index: 10" in content
+
+    # 6. Active filter badges
+    assert 'id="active-filters-bar"' in content
+    assert 'id="btn-clear-all-filters"' in content
+    assert 'btn-remove-pill' in content
+
+    # 7. Table density toggle
+    assert 'id="btn-density-toggle"' in content
+    assert 'density-compact' in content
+
+    # 8. Keyboard shortcuts
+    assert 'class="kbd-hint"' in content
+    assert "initKeyboardShortcuts" in content
+
+    # 9. DOM structure validation
+    validator = HTMLTagValidator()
+    validator.feed(content)
+    assert len(validator.errors) == 0, f"DOM errors found: {validator.errors}"
+    assert len(validator.stack) == 0, f"Unclosed tags found: {validator.stack}"
+
+
+def test_html_reporter_highlight_match_helper():
+    # Empty cases
+    assert HtmlReporter._highlight_match("", "test") == ""
+    assert HtmlReporter._highlight_match("/url", "") == "/url"
+
+    # Exact substring
+    hl = HtmlReporter._highlight_match("/search?q=union+select", "union")
+    assert hl == '/search?q=<mark class="hl-match">union</mark>+select'
+
+    # Case-insensitive substring
+    hl_ci = HtmlReporter._highlight_match("/admin/LOGIN.PHP", "login")
+    assert hl_ci == '/admin/<mark class="hl-match">LOGIN</mark>.PHP'
+
+    # Safe escaping of special characters
+    hl_xss = HtmlReporter._highlight_match("/?q=<script>alert(1)</script>", "<script>")
+    assert hl_xss == '/?q=<mark class="hl-match">&lt;script&gt;</mark>alert(1)&lt;/script&gt;'
+
+    # No match
+    hl_none = HtmlReporter._highlight_match("/clean/page.html", "sqli")
+    assert hl_none == "/clean/page.html"
+
+
+def test_html_reporter_breach_triage_and_timeline(tmp_path):
+    result = make_sample_result()
+    out_file = tmp_path / "report_forensics.html"
+    HtmlReporter.generate(result, str(out_file), source_name="forensic_test.log")
+
+    content = out_file.read_text(encoding="utf-8")
+
+    # 1. Breach Triage Panel
+    assert "breach-triage-panel" in content
+    assert "btn-triage-200" in content
+    assert "Exploitation Outcome Triage" in content
+    assert "HTTP 200 Exploitation Events" in content
+    assert "Target Endpoints" in content
+    assert "Adversary Sources" in content
+
+    # 2. Timeline Section
+    assert "timeline-panel" in content
+    assert "timeline-svg-daily" in content
+    assert "timeline-svg-hourly" in content
+    assert "btn-timeline-daily" in content
+    assert "btn-timeline-hourly" in content
+    assert "timeline-tooltip" in content
+    assert 'class="timeline-bar"' in content
+    assert "data-bucket-key=" in content
+
+    # 3. JSON payload includes is_exploit_200
+    m = re.search(r'<script id="scalp-data" type="application/json">(.*?)</script>', content, re.DOTALL)
+    assert m is not None
+    data = json.loads(m.group(1))
+    assert len(data["matches"]) >= 1
+    assert "is_exploit_200" in data["matches"][0]
+    assert data["matches"][0]["is_exploit_200"] is True
+
+    # 4. DOM structure validity
+    validator = HTMLTagValidator()
+    validator.feed(content)
+    assert len(validator.errors) == 0, f"DOM errors found: {validator.errors}"
+    assert len(validator.stack) == 0, f"Unclosed tags found: {validator.stack}"
+
+
+def test_html_reporter_breach_triage_clean_outcome(tmp_path):
+    entry = LogEntry(
+        ip="10.0.0.1",
+        timestamp=datetime(2024, 10, 14, 10, 0, 0),
+        method="GET",
+        url="/login?err=1",
+        protocol="HTTP/1.1",
+        status_code=403,  # Blocked
+        bytes_sent=120,
+        raw_line='10.0.0.1 - - [14/Oct/2024:10:00:00 +0000] "GET /login?err=1 HTTP/1.1" 403 120 "-" "-"',
+    )
+    rule = FilterRule(rule_id="101", description="SQLi Attempt", impact="8", pattern=".*")
+    match = AttackMatch(entry=entry, rule=rule, tag="sqli", matched_string="union")
+    result = ScanResult(total_lines=1, processed_lines=1, matches=[match], elapsed_seconds=0.01)
+
+    out_file = tmp_path / "report_clean_outcome.html"
+    HtmlReporter.generate(result, str(out_file), source_name="clean_outcome.log")
+
+    content = out_file.read_text(encoding="utf-8")
+    assert "breach-triage-clean" in content
+    assert "Clean Outcome" in content
+    assert '<button type="button" id="btn-triage-200"' not in content
+
+

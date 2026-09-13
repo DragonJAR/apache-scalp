@@ -20,6 +20,7 @@ class ScanResult:
     unmatched_lines: List[str] = field(default_factory=list)
     elapsed_seconds: float = 0.0
     anathema: Optional[AnathemaAnalyzer] = None
+    sample_pct: float = 100.0
 
 
 class ScalpEngine:
@@ -92,7 +93,7 @@ class ScalpEngine:
     def scan_file(self, filepath: str) -> ScanResult:
         """Processes a log file in a single pass with O(1) memory footprint."""
         start_time = time.time()
-        result = ScanResult()
+        result = ScanResult(sample_pct=self.sample_pct)
 
         for _, entry, raw_line in LogParser.stream_file(filepath):
             result.total_lines += 1
