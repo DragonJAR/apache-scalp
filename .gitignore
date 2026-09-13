@@ -1,6 +1,49 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Local agents and tools
 .atl/
+
+# OS and Editor artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files and credentials
+.env
+.env.*
+*.pem
+*.key
+
+# Scalp output and temporary files
 examples/output/
+scalp-output/
+verification_output/
+tmp_test/
 scalp_except.txt
+*_scalp_*.html
+*_scalp_*.json
+*_scalp_*.xml
+*_scalp_*.txt
+
+# Root-level loose logs
+/*.log
