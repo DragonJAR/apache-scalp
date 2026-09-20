@@ -13,23 +13,28 @@ from scalp.reporters.base import BaseReporter
 # -----------------------------------------------------------------------------
 CSS_STYLES = """
 :root {
-  --bg-base: #0a0e17;
-  --bg-card: #111827;
-  --bg-card-hover: #162032;
-  --bg-header: #0d1321;
-  --bg-surface: #1f2937;
-  --bg-surface-2: #374151;
-  --border: #1f2937;
-  --border-light: #2d3748;
+  color-scheme: light;
+  --bg-base: #f6f6f4;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fbfbfa;
+  --bg-header: #f9fafb;
+  --bg-surface: #f3f4f6;
+  --bg-surface-2: #e5e7eb;
+  --border: #e5e7eb;
+  --border-light: #d8dbe0;
   --border-focus: #06b6d4;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --text-dim: #6b7280;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
   --accent: #06b6d4;
   --accent-glow: rgba(6, 182, 212, 0.25);
+  --accent-wash: rgba(6, 182, 212, 0.12);
   --danger: #f43f5e;
   --danger-bg: rgba(244, 63, 94, 0.12);
   --danger-border: rgba(244, 63, 94, 0.35);
+  --danger-text: #dc2626;
+  --danger-strong: #e11d48;
+  --danger-strong-2: #be123c;
   --warning: #f59e0b;
   --warning-bg: rgba(245, 158, 11, 0.12);
   --warning-border: rgba(245, 158, 11, 0.35);
@@ -40,12 +45,57 @@ CSS_STYLES = """
   --info-bg: rgba(56, 189, 248, 0.12);
   --purple: #818cf8;
   --purple-bg: rgba(129, 140, 248, 0.12);
-  --code-bg: #030712;
+  --code-bg: #f1f5f9;
+  --code-text: #1e293b;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+}
+
+/* Dark theme: OS preference (unless the viewer forces light) ... */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg-base: #0a0e17;
+    --bg-card: #111827;
+    --bg-card-hover: #162032;
+    --bg-header: #0d1321;
+    --bg-surface: #1f2937;
+    --bg-surface-2: #374151;
+    --border: #1f2937;
+    --border-light: #2d3748;
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --accent-wash: rgba(6, 182, 212, 0.15);
+    --danger-text: #fb7185;
+    --code-bg: #030712;
+    --code-text: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Dark theme: explicit viewer toggle, must win over both OS setting and default */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-base: #0a0e17;
+  --bg-card: #111827;
+  --bg-card-hover: #162032;
+  --bg-header: #0d1321;
+  --bg-surface: #1f2937;
+  --bg-surface-2: #374151;
+  --border: #1f2937;
+  --border-light: #2d3748;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+  --accent-wash: rgba(6, 182, 212, 0.15);
+  --danger-text: #fb7185;
+  --code-bg: #030712;
+  --code-text: #e2e8f0;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
 }
 
@@ -334,6 +384,15 @@ html, body {
   white-space: nowrap;
 }
 
+.stat-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
 .stat-item-name.mono {
   font-family: var(--font-mono);
 }
@@ -349,7 +408,7 @@ html, body {
 
 .stat-bar-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: var(--bg-surface-2);
   border-radius: 9999px;
   overflow: hidden;
@@ -487,13 +546,13 @@ html, body {
 }
 
 .btn-triage:hover {
-  background: #e11d48;
+  background: var(--danger-strong);
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(244, 63, 94, 0.5);
 }
 
 .btn-triage.active {
-  background: #be123c;
+  background: var(--danger-strong-2);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
@@ -504,8 +563,11 @@ html, body {
 
 .timeline-view-toggles {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   align-items: center;
+  padding: 3px;
+  background: var(--bg-surface);
+  border-radius: 9999px;
 }
 
 .btn-sm {
@@ -514,11 +576,23 @@ html, body {
   border-radius: var(--radius-sm);
 }
 
+.timeline-view-toggles .btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  border-radius: 9999px;
+}
+
+.timeline-view-toggles .btn:hover {
+  color: var(--text-main);
+}
+
 .timeline-view-toggles .btn.active {
-  background: var(--accent);
-  color: #000;
+  background: var(--bg-card);
+  color: var(--text-main);
   font-weight: 700;
-  border-color: var(--accent);
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.15);
 }
 
 .timeline-chart-wrapper {
@@ -540,12 +614,14 @@ html, body {
   stroke: var(--border-light);
   stroke-dasharray: 4 4;
   stroke-width: 1;
+  pointer-events: none;
 }
 
 .timeline-axis-text {
   fill: var(--text-dim);
   font-size: 11px;
   font-family: var(--font-mono);
+  pointer-events: none;
 }
 
 .timeline-val-text {
@@ -556,20 +632,68 @@ html, body {
   text-anchor: middle;
 }
 
+/* Invisible full-height hit column per bucket — keeps the existing hover/
+   click-to-filter JS (which targets .timeline-bar) working unchanged while
+   the visible chart becomes a line + gradient area. */
 .timeline-bar {
-  fill: var(--accent);
+  fill: transparent;
   cursor: pointer;
-  transition: fill 0.15s ease, filter 0.15s ease;
+  transition: fill 0.15s ease;
 }
 
 .timeline-bar:hover {
-  fill: #38bdf8;
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+  fill: var(--accent-wash);
 }
 
 .timeline-bar.selected {
-  fill: var(--danger) !important;
-  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.8)) !important;
+  fill: rgba(244, 63, 94, 0.14) !important;
+}
+
+.timeline-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.timeline-area {
+  stroke: none;
+  pointer-events: none;
+}
+
+.timeline-marker {
+  fill: var(--accent);
+  stroke: var(--bg-card);
+  stroke-width: 2;
+  transition: r 0.15s ease, fill 0.15s ease;
+  pointer-events: none;
+}
+
+.timeline-bar:hover + .timeline-marker {
+  r: 5.5;
+}
+
+.timeline-bar.selected + .timeline-marker {
+  fill: var(--danger);
+  r: 5.5;
+}
+
+.timeline-peak-callout {
+  pointer-events: none;
+}
+
+.timeline-peak-callout rect {
+  fill: var(--accent);
+}
+
+.timeline-peak-callout text {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  text-anchor: middle;
 }
 
 .timeline-tooltip {
@@ -577,13 +701,13 @@ html, body {
   pointer-events: none;
   z-index: 1000;
   opacity: 0;
-  background: rgba(13, 19, 33, 0.95);
+  background: var(--bg-card);
   border: 1px solid var(--border-focus);
   border-radius: var(--radius-md);
   padding: 10px 14px;
   font-size: 0.8rem;
   color: var(--text-main);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(8px);
   transition: opacity 0.1s ease;
   min-width: 220px;
@@ -1009,7 +1133,7 @@ html, body {
 }
 
 .col-resizer.active {
-  background-color: rgba(6, 182, 212, 0.15);
+  background-color: var(--accent-wash);
 }
 
 body.col-resizing {
@@ -1145,8 +1269,7 @@ th.resizing {
 }
 
 .btn-clear-all-filters:hover {
-  color: #fff;
-  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -1184,7 +1307,7 @@ th.resizing {
 /* Visual Match Highlight */
 mark.hl-match {
   background-color: rgba(244, 63, 94, 0.25);
-  color: #fb7185;
+  color: var(--danger-text);
   border-bottom: 2px solid var(--danger);
   border-radius: 2px;
   padding: 0 2px;
@@ -1254,7 +1377,7 @@ mark.hl-match {
   border: 1px solid var(--border);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  color: #fb7185;
+  color: var(--danger-text);
   font-family: var(--font-mono);
   font-size: 0.8rem;
 }
@@ -1362,7 +1485,7 @@ mark.hl-match {
   padding: 8px 12px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: #e2e8f0;
+  color: var(--code-text);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -1437,7 +1560,7 @@ mark.hl-match {
   background: var(--bg-card);
   color: var(--accent);
   border: 1px solid var(--accent);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8), 0 0 15px var(--accent-glow);
+  box-shadow: var(--shadow), 0 0 15px var(--accent-glow);
   padding: 10px 18px;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
@@ -1499,6 +1622,42 @@ footer a:hover {
     max-width: 160px;
   }
 }
+
+/* Theme Toggle */
+.btn-theme-toggle {
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+}
+
+.btn-theme-toggle .icon-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .btn-theme-toggle .icon-sun {
+    display: none;
+  }
+  :root:where(:not([data-theme="light"])) .btn-theme-toggle .icon-moon {
+    display: inline;
+  }
+}
+
+:root[data-theme="dark"] .btn-theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .btn-theme-toggle .icon-moon {
+  display: inline;
+}
+
+:root[data-theme="light"] .btn-theme-toggle .icon-sun {
+  display: inline;
+}
+
+:root[data-theme="light"] .btn-theme-toggle .icon-moon {
+  display: none;
+}
 """
 
 # -----------------------------------------------------------------------------
@@ -1549,6 +1708,7 @@ JS_SCRIPT = r"""
   const btnExportCsv = document.getElementById('btn-export-csv');
   const btnExportJson = document.getElementById('btn-export-json');
   const toastEl = document.getElementById('scalp-toast');
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
   const btnDensityToggle = document.getElementById('btn-density-toggle');
   const densityToggleText = document.getElementById('density-toggle-text');
   const matchesTable = document.querySelector('.matches-table');
@@ -2047,6 +2207,27 @@ JS_SCRIPT = r"""
   }
 
   // ---------------------------------------------------------------------------
+  // Light / Dark Theme Toggle
+  // ---------------------------------------------------------------------------
+  function initThemeToggle() {
+    if (!btnThemeToggle) return;
+
+    btnThemeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+        (!document.documentElement.hasAttribute('data-theme') &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const next = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try {
+        localStorage.setItem('scalp-theme', next);
+      } catch (err) {
+        // Storage unavailable (private mode) — theme still applies for this view.
+      }
+      showToast('Switched to ' + next + ' theme');
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Table Density Toggle
   // ---------------------------------------------------------------------------
   function initDensityToggle() {
@@ -2492,6 +2673,7 @@ JS_SCRIPT = r"""
   // Initialization
   initColumnResizing();
   initColumnSorting();
+  initThemeToggle();
   initDensityToggle();
   initActiveFilters();
   initKeyboardShortcuts();
@@ -2654,6 +2836,9 @@ class HtmlReporter(BaseReporter):
             '  <meta charset="UTF-8">',
             '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
             '  <meta name="generator" content="Scalp Security Analyzer">',
+            "  <script>(function(){try{var t=localStorage.getItem('scalp-theme');"
+            "if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}"
+            "}catch(e){}})();</script>",
             f'  <title>Scalp Report — {html.escape(source_display)}</title>',
             f'  <style>{CSS_STYLES}</style>',
             '</head>',
@@ -2675,7 +2860,13 @@ class HtmlReporter(BaseReporter):
             '          </div>',
             '        </div>',
             '      </div>',
-            f'      <div>{status_badge_html}</div>',
+            '      <div style="display: flex; align-items: center; gap: 12px;">',
+            f'        <div>{status_badge_html}</div>',
+            '        <button type="button" id="btn-theme-toggle" class="btn btn-secondary btn-theme-toggle" title="Toggle light / dark theme" aria-label="Toggle theme">',
+            '          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+            '          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+            '        </button>',
+            '      </div>',
             '    </header>',
             kpi_cards_html,
             breach_triage_html,
@@ -2936,6 +3127,10 @@ class HtmlReporter(BaseReporter):
 
     @classmethod
     def _render_timeline_svg(cls, buckets: List[Dict[str, Any]], svg_id: str, is_hourly: bool = False) -> str:
+        """Renders a smooth gradient-filled line chart (Copilot Money-style trend
+        line) with an invisible per-bucket hit column for hover/click-to-filter.
+        The hit columns keep the ``.timeline-bar`` class and ``data-*`` attributes
+        the JS interaction layer already expects, so no JS changes are needed."""
         n_buckets = len(buckets)
         if n_buckets == 0:
             return ""
@@ -2943,27 +3138,24 @@ class HtmlReporter(BaseReporter):
         max_count = max(b["count"] for b in buckets)
         max_count_safe = max(1, max_count)
 
+        padding_left = 65.0
+        padding_right = 35.0
+
         if is_hourly:
-            bar_w = 12.0
-            gap = 4.0
-            col_w = bar_w + gap
-            padding_left = 65.0
-            padding_right = 35.0
+            col_w = 16.0
             svg_width = max(960.0, padding_left + padding_right + (n_buckets * col_w))
             svg_style = f"display: none; min-width: {int(svg_width)}px;" if svg_width > 960 else "display: none; width: 100%;"
         else:
             svg_width = 960.0
-            padding_left = 65.0
-            padding_right = 35.0
             chart_w = svg_width - padding_left - padding_right
             col_w = chart_w / max(1, n_buckets)
-            bar_w = max(16.0, min(64.0, col_w * 0.65))
             svg_style = "display: block; width: 100%;"
 
         svg_height = 220.0
         padding_top = 28.0
         padding_bottom = 44.0
         chart_h = svg_height - padding_top - padding_bottom
+        baseline_y = padding_top + chart_h
 
         # Grid lines and Y-axis labels
         grid_lines = []
@@ -2976,54 +3168,92 @@ class HtmlReporter(BaseReporter):
             )
         grid_markup = "\n        ".join(grid_lines)
 
-        # Bars and axis labels
-        bars_markup = []
+        # One coordinate per bucket, centered in its column
+        points: List[Tuple[float, float]] = []
         for idx, b in enumerate(buckets):
-            count = b["count"]
-            bar_h = (count / max_count_safe) * chart_h if max_count_safe > 0 else 0.0
-            bar_h = max(2.0, bar_h) if count > 0 else 0.0
+            cx = padding_left + (idx * col_w) + (col_w / 2.0)
+            cy = baseline_y - ((b["count"] / max_count_safe) * chart_h if max_count_safe > 0 else 0.0)
+            points.append((cx, cy))
 
-            if is_hourly:
-                x = padding_left + (idx * col_w)
-            else:
-                x = padding_left + (idx * col_w) + (col_w - bar_w) / 2.0
+        # Smooth line through the points (quadratic bezier via midpoints)
+        line_parts = [f"M {points[0][0]:.1f},{points[0][1]:.1f}"]
+        for i in range(1, n_buckets):
+            x0, y0 = points[i - 1]
+            x1, y1 = points[i]
+            mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+            line_parts.append(f"Q {x0:.1f},{y0:.1f} {mx:.1f},{my:.1f}")
+        line_parts.append(f"L {points[-1][0]:.1f},{points[-1][1]:.1f}")
+        line_path = " ".join(line_parts)
+        area_path = (
+            f"{line_path} L {points[-1][0]:.1f},{baseline_y:.1f} "
+            f"L {points[0][0]:.1f},{baseline_y:.1f} Z"
+        )
 
-            y = padding_top + (chart_h - bar_h)
-            cx = x + (bar_w / 2.0)
+        grad_id = f"{svg_id}-grad"
+        defs_markup = f"""<defs>
+          <linearGradient id="{grad_id}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color: var(--accent); stop-opacity: 0.28"/>
+            <stop offset="100%" style="stop-color: var(--accent); stop-opacity: 0"/>
+          </linearGradient>
+        </defs>"""
 
-            # Value text above bar
-            show_val = (not is_hourly) or (count == max_count) or (n_buckets <= 36)
-            val_text = f'<text class="timeline-val-text" x="{cx:.1f}" y="{max(12.0, y - 5.0):.1f}">{count:,}</text>' if show_val else ""
+        # Peak-value callout, mirroring the floating value pill in the reference dashboard
+        peak_idx = max(range(n_buckets), key=lambda i: buckets[i]["count"])
+        peak_count = buckets[peak_idx]["count"]
+        peak_callout = ""
+        if peak_count > 0:
+            px, py = points[peak_idx]
+            label = f"Peak: {peak_count:,} attacks"
+            est_w = max(90.0, 16.0 + len(label) * 6.2)
+            bx = min(max(px, padding_left + est_w / 2.0), svg_width - padding_right - est_w / 2.0)
+            by = max(14.0, py - 34.0)
+            peak_callout = f"""
+        <g class="timeline-peak-callout">
+          <rect x="{bx - est_w / 2.0:.1f}" y="{by:.1f}" width="{est_w:.1f}" height="22" rx="11"/>
+          <text x="{bx:.1f}" y="{by + 15.0:.1f}">{html.escape(label)}</text>
+        </g>"""
 
-            # X-axis label below bar
+        # Hit columns (hover/click) + point markers + axis labels
+        points_markup = []
+        for idx, b in enumerate(buckets):
+            x = padding_left + (idx * col_w)
+            cx, cy = points[idx]
+            marker_r = 4.5 if idx == n_buckets - 1 else 3.0
+
             show_axis = True
             if is_hourly and n_buckets > 24:
                 label_str = b["label"]
                 show_axis = (idx % 6 == 0) or ("00:00" in label_str) or ("12:00" in label_str)
+            axis_text = (
+                f'<text class="timeline-axis-text" x="{cx:.1f}" y="{padding_top + chart_h + 18:.1f}" '
+                f'text-anchor="middle">{html.escape(b["label"])}</text>'
+                if show_axis else ""
+            )
 
-            axis_text = f'<text class="timeline-axis-text" x="{cx:.1f}" y="{padding_top + chart_h + 18:.1f}" text-anchor="middle">{html.escape(b["label"])}</text>' if show_axis else ""
-
-            bars_markup.append(f"""        <g>
-          {val_text}
+            points_markup.append(f"""        <g>
           <rect class="timeline-bar"
-                x="{x:.1f}" y="{y:.1f}"
-                width="{bar_w:.1f}" height="{bar_h:.1f}"
-                rx="3"
+                x="{x:.1f}" y="{padding_top:.1f}"
+                width="{col_w:.1f}" height="{chart_h:.1f}"
                 data-bucket-key="{html.escape(b['key'])}"
                 data-label="{html.escape(b['label'])}"
                 data-count="{b['count']:,}"
                 data-pct="{b['pct']:.1f}%"
                 data-cat="{html.escape(b['cat'])}"
                 data-ip="{html.escape(b['ip'])}"/>
+          <circle class="timeline-marker" cx="{cx:.1f}" cy="{cy:.1f}" r="{marker_r}"/>
           {axis_text}
         </g>""")
 
-        bars_html = "\n".join(bars_markup)
+        points_html = "\n".join(points_markup)
 
         return f"""
       <svg id="{svg_id}" class="timeline-svg" viewBox="0 0 {int(svg_width)} {int(svg_height)}" style="{svg_style}">
+        {defs_markup}
         {grid_markup}
-{bars_html}
+        <path class="timeline-area" d="{area_path}" fill="url(#{grad_id})"/>
+        <path class="timeline-line" d="{line_path}"/>
+{points_html}
+        {peak_callout}
       </svg>"""
 
     @classmethod
@@ -3188,7 +3418,7 @@ class HtmlReporter(BaseReporter):
             ip_rows.append(f"""
           <div class="stat-item-row">
             <div class="stat-item-header">
-              <span class="stat-item-name mono">{html.escape(ip)}</span>
+              <span class="stat-item-name mono"><span class="stat-dot" style="background: {bar_color};"></span>{html.escape(ip)}</span>
               <div class="stat-item-counts">
                 {status_pill}
                 <b>{count:,} attacks</b>
@@ -3211,7 +3441,7 @@ class HtmlReporter(BaseReporter):
             target_rows.append(f"""
           <div class="stat-item-row">
             <div class="stat-item-header">
-              <span class="stat-item-name mono" title="{html.escape(target)}">{html.escape(target)}</span>
+              <span class="stat-item-name mono" title="{html.escape(target)}"><span class="stat-dot" style="background: var(--purple);"></span>{html.escape(target)}</span>
               <div class="stat-item-counts">
                 <span class="badge badge-vector">{html.escape(top_name)}</span>
                 <b>{count:,}</b>
@@ -3234,7 +3464,7 @@ class HtmlReporter(BaseReporter):
             cat_rows.append(f"""
           <div class="stat-item-row">
             <div class="stat-item-header">
-              <span class="stat-item-name">{html.escape(cat_name)} <span style="color: var(--text-dim); font-size: 0.75rem;">({html.escape(tag)})</span></span>
+              <span class="stat-item-name"><span class="stat-dot" style="background: {color};"></span>{html.escape(cat_name)} <span style="color: var(--text-dim); font-size: 0.75rem;">({html.escape(tag)})</span></span>
               <div class="stat-item-counts">
                 <span>{pct:.1f}%</span>
                 <b>{count:,}</b>
@@ -3264,6 +3494,7 @@ class HtmlReporter(BaseReporter):
           <div class="stat-item-row">
             <div class="stat-item-header">
               <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="stat-dot" style="background: {color};"></span>
                 <span class="badge {badge_class}">HTTP {code}</span>
               </div>
               <div class="stat-item-counts">
